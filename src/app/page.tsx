@@ -10,27 +10,17 @@ export default async function Home() {
   ]);
 
   const stats = [
-    { label: "Historic order records", value: orderCount.toLocaleString() },
-    { label: "Quarters of history", value: String(quarterRows.length) },
-    {
-      label: "Avg. sell-through",
-      value: `${(avgSellThrough._avg.sellThroughPct ?? 0).toFixed(1)}%`,
-    },
-    { label: "Buy plans created", value: String(planCount) },
+    { tag: "HISTORY", value: orderCount.toLocaleString(), label: "Order records" },
+    { tag: "COVERAGE", value: String(quarterRows.length), label: "Quarters tracked" },
+    { tag: "PERFORMANCE", value: `${(avgSellThrough._avg.sellThroughPct ?? 0).toFixed(1)}%`, label: "Avg. sell-through" },
+    { tag: "OUTPUT", value: String(planCount), label: "Buy plans created" },
   ];
 
   return (
     <div className="flex flex-col">
-      <section className="relative overflow-hidden border-b border-hairline">
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle at 15% 20%, rgba(176,141,87,0.16), transparent 45%), radial-gradient(circle at 85% 0%, rgba(176,141,87,0.12), transparent 40%), linear-gradient(180deg, #f7f2e6 0%, #ffffff 65%)",
-          }}
-        />
+      <section className="relative overflow-hidden border-b border-hairline bg-background">
         <svg
-          className="absolute inset-0 h-full w-full opacity-[0.35]"
+          className="absolute inset-0 h-full w-full opacity-[0.5]"
           preserveAspectRatio="none"
           viewBox="0 0 1200 500"
           aria-hidden
@@ -38,59 +28,64 @@ export default async function Home() {
           <polyline
             points="0,420 120,380 240,400 360,300 480,340 600,220 720,260 840,160 960,190 1080,90 1200,120"
             fill="none"
-            stroke="#b08d57"
+            stroke="var(--accent)"
             strokeWidth="1.5"
-            strokeOpacity="0.5"
+            strokeOpacity="0.3"
           />
           <polyline
             points="0,470 150,450 300,460 450,410 600,430 750,360 900,390 1050,320 1200,340"
             fill="none"
-            stroke="#8c6f43"
+            stroke="var(--foreground)"
             strokeWidth="1"
-            strokeOpacity="0.35"
+            strokeOpacity="0.12"
           />
         </svg>
 
-        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-6 py-28 text-center sm:py-36">
-          <span className="rounded-full border border-hairline bg-white/70 px-4 py-1.5 text-xs uppercase tracking-widest text-ink-soft">
+        <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-7 px-6 py-28 text-center sm:py-40">
+          <span className="tracking-label rounded-full border border-hairline-strong px-4 py-1.5 text-[11px] text-foreground-soft">
             Data-driven buy planning
           </span>
-          <h1 className="font-serif-display text-5xl leading-tight text-ink sm:text-6xl">
-            Welcome to MODO
+          <h1 className="font-display text-4xl leading-[1.05] text-foreground sm:text-6xl">
+            A buy plan for every quarter,
+            <br />
+            built on your <span className="text-accent">retail</span> data
           </h1>
-          <p className="max-w-xl text-balance text-lg text-ink-soft">
+          <p className="max-w-xl text-balance text-lg text-foreground-soft">
             Upload next quarter&apos;s catalog and we&apos;ll build a data-driven buy plan
             based on historic sales, sell-through, and fashion trend signals.
           </p>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-            <LinkButton href="/buy-plans/new" variant="dark" className="px-6 py-3 text-[15px]">
+            <LinkButton href="/buy-plans/new" variant="accent" className="px-6 py-3 text-[15px]">
               Upload your catalog
             </LinkButton>
-            <LinkButton href="/historic-orders" variant="outline" className="bg-white/70 px-6 py-3 text-[15px]">
+            <LinkButton href="/historic-orders" variant="outline" className="px-6 py-3 text-[15px]">
               View historic orders
             </LinkButton>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 py-14 sm:px-10">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <section className="border-b border-hairline bg-nav px-6 py-16 sm:px-10">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
           {stats.map((s) => (
-            <Card key={s.label} className="p-5 text-center sm:text-left">
-              <div className="font-serif-display text-3xl text-ink">{s.value}</div>
-              <div className="mt-1 text-xs uppercase tracking-wide text-ink-soft">{s.label}</div>
-            </Card>
+            <div key={s.tag}>
+              <span className="tracking-label inline-block rounded-full border border-hairline-strong px-3 py-1 text-[10px] text-foreground-soft">
+                {s.tag}
+              </span>
+              <div className="mt-4 font-display text-4xl text-foreground sm:text-5xl">{s.value}</div>
+              <div className="mt-1 text-sm text-foreground-soft">{s.label}</div>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-6 pb-20 sm:px-10">
-        <h2 className="font-serif-display text-2xl text-ink">How MODO works</h2>
-        <p className="mt-2 max-w-2xl text-ink-soft">
+      <section className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-10">
+        <h2 className="font-display text-2xl text-foreground sm:text-3xl">How MODO works</h2>
+        <p className="mt-3 max-w-2xl text-foreground-soft">
           Three tools, one quarterly workflow &mdash; from what sold last time to what to buy next time.
         </p>
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-3">
+        <div className="mt-10 grid gap-5 sm:grid-cols-3">
           <FeatureCard
             step="01"
             title="Manage historic orders"
@@ -115,13 +110,13 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="border-t border-hairline bg-gradient-to-br from-[#8c6f43] via-[#a9895f] to-[#c9a96b] px-6 py-16 text-center text-cream sm:px-10">
-        <h2 className="font-serif-display text-3xl">Ready to plan next quarter?</h2>
-        <p className="mx-auto mt-2 max-w-lg text-cream/85">
+      <section className="border-t border-hairline bg-accent px-6 py-16 text-center sm:px-10">
+        <h2 className="font-display text-3xl text-accent-ink sm:text-4xl">Ready to plan next quarter?</h2>
+        <p className="mx-auto mt-3 max-w-lg text-accent-ink/80">
           Upload your catalog and get a recommended buy plan grounded in your own sales history.
         </p>
-        <div className="mt-6">
-          <LinkButton href="/buy-plans/new" variant="primary" className="px-6 py-3 text-[15px]">
+        <div className="mt-7">
+          <LinkButton href="/buy-plans/new" variant="light" className="px-6 py-3 text-[15px]">
             Upload your catalog
           </LinkButton>
         </div>
@@ -145,9 +140,9 @@ function FeatureCard({
 }) {
   return (
     <Card className="flex flex-col gap-4 p-6">
-      <span className="font-serif-display text-sm text-gold-dark">{step}</span>
-      <h3 className="font-serif-display text-xl text-ink">{title}</h3>
-      <p className="flex-1 text-sm text-ink-soft">{description}</p>
+      <span className="font-display text-sm text-accent">{step}</span>
+      <h3 className="font-display text-lg text-foreground">{title}</h3>
+      <p className="flex-1 text-sm text-foreground-soft">{description}</p>
       <LinkButton href={href} variant="outline" className="self-start text-xs">
         {cta}
       </LinkButton>

@@ -104,17 +104,17 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <Badge tone="gold">{plan.quarter}</Badge>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Badge tone="accent">{plan.quarter}</Badge>
             <Badge tone={locked ? "green" : "neutral"}>{locked ? "Locked" : "Draft"}</Badge>
             {plan.brandFocus && <Badge>Trend focus: {plan.brandFocus}</Badge>}
           </div>
-          <h1 className="font-serif-display text-3xl text-ink sm:text-4xl">{plan.name}</h1>
+          <h1 className="font-display text-2xl text-foreground sm:text-3xl">{plan.name}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <a
             href={`/api/buy-plans/${plan.id}/export`}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-cream hover:bg-ink/90"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium tracking-wide text-background hover:bg-foreground/90"
           >
             Export to Excel
           </a>
@@ -123,7 +123,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
               {saving ? "Saving…" : "Save changes"}
             </Button>
           )}
-          <Button variant={locked ? "outline" : "dark"} onClick={toggleLock} disabled={locking}>
+          <Button variant={locked ? "outline" : "accent"} onClick={toggleLock} disabled={locking}>
             {locking ? "Working…" : locked ? "Unlock plan" : "Lock plan"}
           </Button>
         </div>
@@ -137,7 +137,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
       </div>
 
       {locked && (
-        <Card className="border-gold-soft bg-gold-soft/15 p-4 text-sm text-gold-dark">
+        <Card className="border-accent/30 bg-accent/10 p-4 text-sm text-accent">
           This plan is locked. Unlock it to adjust quantities before export.
         </Card>
       )}
@@ -145,7 +145,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
       <Card className="overflow-hidden">
         <div className="max-h-[720px] overflow-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
-            <thead className="sticky top-0 bg-cream-card text-xs uppercase tracking-wide text-ink-soft">
+            <thead className="tracking-label sticky top-0 bg-surface-hover text-xs text-foreground-soft">
               <tr>
                 <Th>Item</Th>
                 <Th>Category</Th>
@@ -161,7 +161,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
             <tbody>
               {items.map((item) => (
                 <Fragment key={item.id}>
-                  <tr className="border-t border-hairline align-top hover:bg-cream-card/50">
+                  <tr className="border-t border-hairline align-top hover:bg-surface-hover/50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {item.imageUrl ? (
@@ -172,27 +172,27 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                             className="h-10 w-10 flex-shrink-0 rounded-md border border-hairline object-cover"
                           />
                         ) : (
-                          <div className="h-10 w-10 flex-shrink-0 rounded-md border border-dashed border-hairline bg-cream-card" />
+                          <div className="h-10 w-10 flex-shrink-0 rounded-md border border-dashed border-hairline bg-surface-hover" />
                         )}
                         <div>
-                          <div className="font-medium text-ink">{item.styleName}</div>
-                          <div className="text-xs text-ink-soft">
+                          <div className="font-medium text-foreground">{item.styleName}</div>
+                          <div className="text-xs text-foreground-soft">
                             {item.sku ?? "—"} {item.color ? `· ${item.color}` : ""}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">{item.category}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-ink-soft">
+                    <td className="px-4 py-3 text-foreground-soft">{item.category}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground-soft">
                       {currency2.format(item.unitCost)} / {currency2.format(item.unitPrice)}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{item.trendScore}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">{item.trendScore}</td>
                     <td className="px-4 py-3">
-                      <Badge tone={item.confidence === "high" ? "green" : item.confidence === "medium" ? "gold" : "neutral"}>
+                      <Badge tone={item.confidence === "high" ? "green" : item.confidence === "medium" ? "accent" : "neutral"}>
                         {item.confidence}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-ink-soft">{item.recommendedQty}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground-soft">{item.recommendedQty}</td>
                     <td className="px-4 py-3 text-right">
                       <input
                         type="number"
@@ -200,30 +200,30 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                         value={item.finalQty}
                         disabled={locked}
                         onChange={(e) => updateQty(item.id, parseInt(e.target.value || "0", 10))}
-                        className="w-20 rounded-lg border border-hairline bg-white px-2 py-1 text-right text-sm outline-none focus:border-gold disabled:bg-cream-card disabled:text-ink-soft"
+                        className="w-20 rounded-lg border border-hairline bg-surface-hover px-2 py-1 text-right text-sm text-foreground outline-none focus:border-accent disabled:text-foreground-soft"
                       />
                       {!locked && item.finalQty !== item.recommendedQty && (
                         <button
                           onClick={() => resetToRecommended(item.id)}
-                          className="mt-1 block w-full text-right text-[11px] text-ink-soft underline hover:text-ink"
+                          className="mt-1 block w-full text-right text-[11px] text-foreground-soft underline hover:text-accent"
                         >
                           reset
                         </button>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{currency.format(item.finalQty * item.unitCost)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">{currency.format(item.finalQty * item.unitCost)}</td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                        className="text-xs text-ink-soft underline hover:text-ink"
+                        className="text-xs text-foreground-soft underline hover:text-accent"
                       >
                         {expandedId === item.id ? "hide" : "why?"}
                       </button>
                     </td>
                   </tr>
                   {expandedId === item.id && (
-                    <tr className="border-t border-hairline bg-cream-card/40">
-                      <td colSpan={9} className="px-4 py-3 text-xs text-ink-soft">
+                    <tr className="border-t border-hairline bg-surface-hover/40">
+                      <td colSpan={9} className="px-4 py-3 text-xs text-foreground-soft">
                         {item.rationale}
                       </td>
                     </tr>
@@ -245,8 +245,8 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <Card className="p-5">
-      <div className="text-xs uppercase tracking-wide text-ink-soft">{label}</div>
-      <div className="mt-2 font-serif-display text-2xl text-ink">{value}</div>
+      <div className="tracking-label text-xs text-foreground-soft">{label}</div>
+      <div className="mt-2 font-display text-2xl text-foreground">{value}</div>
     </Card>
   );
 }

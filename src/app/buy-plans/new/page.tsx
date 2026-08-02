@@ -74,8 +74,8 @@ export default function NewBuyPlanPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-12 sm:px-10">
       <div className="mb-8 text-center">
-        <h1 className="font-serif-display text-4xl text-ink">Create a Buy Plan</h1>
-        <p className="mx-auto mt-2 max-w-xl text-ink-soft">
+        <h1 className="font-display text-3xl text-foreground sm:text-4xl">Create a Buy Plan</h1>
+        <p className="mx-auto mt-3 max-w-xl text-foreground-soft">
           Upload next quarter&apos;s catalog and we&apos;ll recommend order quantities based on
           historic sell-through and trend signal.
         </p>
@@ -95,10 +95,10 @@ export default function NewBuyPlanPage() {
           }}
           onClick={() => fileInputRef.current?.click()}
           className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
-            dragActive ? "border-gold bg-gold-soft/20" : "border-hairline hover:border-gold/60"
+            dragActive ? "border-accent bg-accent/10" : "border-hairline hover:border-accent/60"
           }`}
         >
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" className="text-ink-soft" aria-hidden>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" className="text-foreground-soft" aria-hidden>
             <path
               d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 3v12m0-12l-4 4m4-4l4 4"
               stroke="currentColor"
@@ -108,11 +108,11 @@ export default function NewBuyPlanPage() {
             />
           </svg>
           {file ? (
-            <p className="font-medium text-ink">{file.name}</p>
+            <p className="font-medium text-foreground">{file.name}</p>
           ) : (
             <>
-              <p className="font-medium text-ink">Click to upload a catalog or drag &amp; drop</p>
-              <p className="text-xs text-ink-soft">Supports CSV, XLSX &mdash; needs style, category, cost, price columns</p>
+              <p className="font-medium text-foreground">Click to upload a catalog or drag &amp; drop</p>
+              <p className="text-xs text-foreground-soft">Supports CSV, XLSX &mdash; item name is the only required column</p>
             </>
           )}
           <input
@@ -124,9 +124,9 @@ export default function NewBuyPlanPage() {
           />
         </div>
 
-        <p className="mt-3 text-center text-xs text-ink-soft">
+        <p className="mt-3 text-center text-xs text-foreground-soft">
           No catalog handy?{" "}
-          <a href="/sample-catalog.csv" download className="underline hover:text-ink">
+          <a href="/sample-catalog.csv" download className="text-accent underline hover:text-accent-dark">
             Download a sample catalog
           </a>{" "}
           to try it out.
@@ -138,14 +138,14 @@ export default function NewBuyPlanPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={`${quarter} Buy Plan`}
-              className="w-full rounded-full border border-hairline bg-white px-4 py-2.5 text-sm outline-none focus:border-gold"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
             />
           </Field>
           <Field label="Target quarter">
             <select
               value={quarter}
               onChange={(e) => setQuarter(e.target.value)}
-              className="w-full rounded-full border border-hairline bg-white px-4 py-2.5 text-sm outline-none focus:border-gold"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
             >
               {quarters.map((q) => (
                 <option key={q} value={q}>
@@ -159,7 +159,7 @@ export default function NewBuyPlanPage() {
               value={brandFocus}
               onChange={(e) => setBrandFocus(e.target.value)}
               placeholder="e.g. Modo Label"
-              className="w-full rounded-full border border-hairline bg-white px-4 py-2.5 text-sm outline-none focus:border-gold"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
             />
           </Field>
           <Field label="Total budget (optional)">
@@ -168,15 +168,15 @@ export default function NewBuyPlanPage() {
               onChange={(e) => setTotalBudget(e.target.value.replace(/[^0-9.]/g, ""))}
               placeholder="e.g. 50000"
               inputMode="decimal"
-              className="w-full rounded-full border border-hairline bg-white px-4 py-2.5 text-sm outline-none focus:border-gold"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
             />
           </Field>
         </div>
 
-        {error && <p className="mt-4 text-sm text-rose-600">{error}</p>}
+        {error && <p className="mt-4 text-sm text-tone-red">{error}</p>}
 
         <div className="mt-8 flex justify-center">
-          <Button variant="dark" className="px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
+          <Button variant="accent" className="px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
             {submitting ? "Generating buy plan…" : "Generate Buy Plan"}
           </Button>
         </div>
@@ -188,7 +188,7 @@ export default function NewBuyPlanPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs uppercase tracking-wide text-ink-soft">{label}</label>
+      <label className="tracking-label mb-1.5 block text-xs text-foreground-soft">{label}</label>
       {children}
     </div>
   );

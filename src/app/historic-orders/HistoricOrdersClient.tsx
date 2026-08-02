@@ -75,17 +75,17 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
         <Select label="Category" value={category} onChange={setCategory} options={options.categories} />
         <Select label="Brand" value={brand} onChange={setBrand} options={options.brands} />
         <div className="flex-1 min-w-[200px]">
-          <label className="mb-1 block text-xs uppercase tracking-wide text-ink-soft">Search</label>
+          <label className="tracking-label mb-1 block text-xs text-foreground-soft">Search</label>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Style, SKU, or color…"
-            className="w-full rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-gold"
+            className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none focus:border-accent"
           />
         </div>
         <a
           href={`/api/historic-orders?${queryString ? `${queryString}&` : ""}format=xlsx`}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 sm:self-end"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium tracking-wide text-accent-ink transition-colors hover:bg-accent-dark sm:self-end"
         >
           Export to Excel
         </a>
@@ -103,7 +103,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
       <Card className="overflow-hidden">
         <div className="max-h-[640px] overflow-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="sticky top-0 bg-cream-card text-xs uppercase tracking-wide text-ink-soft">
+            <thead className="tracking-label sticky top-0 bg-surface-hover text-xs text-foreground-soft">
               <tr>
                 <Th>SKU</Th>
                 <Th>Style</Th>
@@ -120,35 +120,35 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-ink-soft">
+                  <td colSpan={10} className="px-4 py-10 text-center text-foreground-soft">
                     Loading…
                   </td>
                 </tr>
               )}
               {orders && orders.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-ink-soft">
+                  <td colSpan={10} className="px-4 py-10 text-center text-foreground-soft">
                     No orders match these filters.
                   </td>
                 </tr>
               )}
               {orders &&
                 orders.map((o) => (
-                  <tr key={o.id} className="border-t border-hairline hover:bg-cream-card/60">
-                    <td className="px-4 py-2.5 font-mono text-xs text-ink-soft">{o.sku}</td>
-                    <td className="px-4 py-2.5">{o.styleName}</td>
-                    <td className="px-4 py-2.5 text-ink-soft">{o.category}</td>
-                    <td className="px-4 py-2.5 text-ink-soft">{o.color}</td>
-                    <td className="px-4 py-2.5 text-ink-soft">{o.brand}</td>
+                  <tr key={o.id} className="border-t border-hairline hover:bg-surface-hover/60">
+                    <td className="px-4 py-2.5 font-mono text-xs text-foreground-soft">{o.sku}</td>
+                    <td className="px-4 py-2.5 text-foreground">{o.styleName}</td>
+                    <td className="px-4 py-2.5 text-foreground-soft">{o.category}</td>
+                    <td className="px-4 py-2.5 text-foreground-soft">{o.color}</td>
+                    <td className="px-4 py-2.5 text-foreground-soft">{o.brand}</td>
                     <td className="px-4 py-2.5">
                       <Badge>{o.season}</Badge>
                     </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{o.qtyOrdered}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{o.qtySold}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-foreground">{o.qtyOrdered}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-foreground">{o.qtySold}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">
                       <SellThroughBadge value={o.sellThroughPct} />
                     </td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{currency.format(o.revenue)}</td>
+                    <td className="px-4 py-2.5 text-right tabular-nums text-foreground">{currency.format(o.revenue)}</td>
                   </tr>
                 ))}
             </tbody>
@@ -176,11 +176,11 @@ function Select({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs uppercase tracking-wide text-ink-soft">{label}</label>
+      <label className="tracking-label mb-1 block text-xs text-foreground-soft">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-full border border-hairline bg-white px-4 py-2 text-sm outline-none focus:border-gold"
+        className="rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none focus:border-accent"
       >
         <option value="">All</option>
         {options.map((o) => (
@@ -196,13 +196,13 @@ function Select({
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <Card className="p-5">
-      <div className="text-xs uppercase tracking-wide text-ink-soft">{label}</div>
-      <div className="mt-2 font-serif-display text-2xl text-ink">{value}</div>
+      <div className="tracking-label text-xs text-foreground-soft">{label}</div>
+      <div className="mt-2 font-display text-2xl text-foreground">{value}</div>
     </Card>
   );
 }
 
 function SellThroughBadge({ value }: { value: number }) {
-  const tone = value >= 75 ? "green" : value >= 50 ? "gold" : "red";
+  const tone = value >= 75 ? "green" : value >= 50 ? "accent" : "red";
   return <Badge tone={tone}>{value.toFixed(1)}%</Badge>;
 }
