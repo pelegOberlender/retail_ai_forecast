@@ -16,7 +16,7 @@ export default async function BuyPlansPage() {
         <div>
           <h1 className="font-display text-3xl text-foreground sm:text-4xl">Buy Plans</h1>
           <p className="mt-3 max-w-xl text-foreground-soft">
-            Every buy plan you&apos;ve generated, by quarter &mdash; draft or locked and ready to send.
+            Every buy plan you&apos;ve generated, by quarter, draft or locked and ready to send.
           </p>
         </div>
         <LinkButton href="/buy-plans/new" variant="light" className="px-6 py-3 text-[15px]">

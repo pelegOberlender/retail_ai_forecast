@@ -177,7 +177,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                         <div>
                           <div className="font-medium text-foreground">{item.styleName}</div>
                           <div className="text-xs text-foreground-soft">
-                            {item.sku ?? "—"} {item.color ? `· ${item.color}` : ""}
+                            {item.sku ?? "No SKU"} {item.color ? `· ${item.color}` : ""}
                           </div>
                         </div>
                       </div>

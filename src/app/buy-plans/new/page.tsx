@@ -112,7 +112,7 @@ export default function NewBuyPlanPage() {
           ) : (
             <>
               <p className="font-medium text-foreground">Click to upload a catalog or drag &amp; drop</p>
-              <p className="text-xs text-foreground-soft">Supports CSV, XLSX &mdash; item name is the only required column</p>
+              <p className="text-xs text-foreground-soft">Supports CSV, XLSX. Item name is the only required column.</p>
             </>
           )}
           <input

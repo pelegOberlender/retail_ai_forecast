@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MODO — Data-Driven Buy Planning",
+  title: "MODO: Data-Driven Buy Planning",
   description:
     "Forecast demand and build quarterly buy plans from historic orders, catalog data, and fashion trend signals.",
 };

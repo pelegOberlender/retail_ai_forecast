@@ -9,7 +9,7 @@ export default async function HistoricOrdersPage() {
       <div className="mb-8">
         <h1 className="font-display text-3xl text-foreground sm:text-4xl">Historic Orders</h1>
         <p className="mt-3 max-w-2xl text-foreground-soft">
-          Every past order across quarters &mdash; filter by season, category, or brand, and export
+          Every past order across quarters. Filter by season, category, or brand, and export
           the results to Excel.
         </p>
       </div>

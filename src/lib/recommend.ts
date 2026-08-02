@@ -178,7 +178,7 @@ export async function generateBuyPlanRecommendations(
 
       const historicSentence = bestMatch
         ? `Comparable to ${bestMatch.sku} (${bestMatch.styleName}, ${bestMatch.season}) which sold through ${bestMatch.sellThroughPct.toFixed(1)}%.`
-        : `No close historic match — using ${category} category average (${(avgSellThrough ?? 55).toFixed(1)}% sell-through).`;
+        : `No close historic match. Using the ${category} category average (${(avgSellThrough ?? 55).toFixed(1)}% sell-through).`;
       const trendSentence = liveTrend
         ? liveTrend.rationale
         : `Trend score ${trendScore}/100 for ${category}${options.brandFocus ? ` and "${options.brandFocus}"` : ""} heading into ${options.quarter}.`;
