@@ -21,22 +21,76 @@ Three tools, one quarterly workflow:
 - Prisma + SQLite (`prisma/schema.prisma`, `prisma/dev.db`)
 - SheetJS (`xlsx`) for Excel import/export
 
-## Getting started
+## First-time setup
+
+Prerequisites: Node 20+ and npm.
 
 ```bash
+git clone https://github.com/pelegOberlender/retail_ai_forecast.git
+cd retail_ai_forecast
 npm install
-npm run db:seed   # populates ~800 mock historic order rows across 8 quarters
+```
+
+`npm install` triggers Prisma's client generator via a postinstall script. If
+your npm is configured with a script-approval gate (you'll see
+`npm warn allow-scripts` listing `prisma`, `@prisma/client`, etc.), approve
+them so the generator can run:
+
+```bash
+npm approve-scripts   # follow the prompts, or:
+npm approve-scripts @prisma/client @prisma/engines prisma sharp unrs-resolver esbuild fsevents
+npm install            # re-run once scripts are approved
+```
+
+If you're not sure whether it ran, `npx prisma generate` is safe to run again
+manually — it's idempotent.
+
+Next, set up the local database:
+
+```bash
+cp .env.example .env      # DATABASE_URL for the local SQLite file — not committed
+npx prisma db push        # creates prisma/dev.db from prisma/schema.prisma
+npm run db:seed           # populates ~800 mock historic order rows across 8 quarters
+```
+
+Then run the app:
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Use
-`public/sample-catalog.csv` to try the "New Buy Plan" upload without your own
-data.
+Open [http://localhost:3000](http://localhost:3000).
 
-Catalog files need columns for style, category, cost, and price (aliases like
-`SKU`/`style code`, `style`/`product`/`name`, `category`/`type`,
-`cost`/`wholesale`, `price`/`retail` are all recognized — see
-`src/lib/parseCatalog.ts`).
+## Using it after setup
+
+1. **Home** gives you the lay of the land and live counts from the seeded data.
+2. **Historic Orders** (`/historic-orders`) — filter by quarter/category/brand
+   or search, then "Export to Excel" to download the filtered set.
+3. **New Buy Plan** (`/buy-plans/new`) — upload a catalog file. Don't have one
+   handy? Click "Download a sample catalog" on that page (or grab
+   `public/sample-catalog.csv` directly) to try the flow end-to-end. Fill in
+   the target quarter, optionally a brand to focus the trend read on, and an
+   optional total budget, then "Generate Buy Plan" — you'll land on the
+   editor for the plan it just created.
+
+   Catalog files need columns for style, category, cost, and price. Header
+   aliases like `SKU`/`style code`, `style`/`product`/`name`, `category`/`type`,
+   `cost`/`wholesale`, `price`/`retail` are all recognized — see
+   `src/lib/parseCatalog.ts` for the full list.
+4. **Buy plan editor** (`/buy-plans/[id]`) — each line shows the recommended
+   quantity, a confidence badge, and a "why?" link with the rationale. Edit
+   the "Final Qty" column directly, "Save changes", then "Lock plan" once
+   it's final (locking freezes editing). "Export to Excel" works in either
+   state and produces a two-sheet workbook (line items + summary).
+5. **Buy Plans** (`/buy-plans`) — every plan you've generated, draft or
+   locked, with quarter/unit/cost totals at a glance.
+
+## Resetting data
+
+- `npm run db:seed` clears and regenerates historic orders only (buy plans
+  are untouched).
+- To wipe everything and start clean: delete `prisma/dev.db`, then re-run
+  `npx prisma db push && npm run db:seed`.
 
 ## Recommendation engine — current state and roadmap
 
