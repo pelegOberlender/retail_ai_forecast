@@ -123,7 +123,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
               {saving ? "Saving…" : "Save changes"}
             </Button>
           )}
-          <Button variant={locked ? "outline" : "accent"} onClick={toggleLock} disabled={locking}>
+          <Button variant={locked ? "outline" : "light"} onClick={toggleLock} disabled={locking}>
             {locking ? "Working…" : locked ? "Unlock plan" : "Lock plan"}
           </Button>
         </div>

@@ -18,19 +18,19 @@ export default function Nav() {
     <header className="sticky top-0 z-40 border-b border-hairline bg-nav/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 sm:px-10">
         <Link href="/" className="flex items-center gap-2 text-foreground">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
               d="M3 19L9 9.5L12.5 14.5L21 3"
-              stroke="var(--accent)"
-              strokeWidth="2.6"
+              stroke="currentColor"
+              strokeWidth="2.4"
               strokeLinecap="square"
               strokeLinejoin="miter"
             />
           </svg>
-          <span className="font-display text-base">MODO</span>
+          <span className="font-display text-sm">MODO</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-xs md:flex">
+        <nav className="hidden items-center gap-9 text-xs md:flex">
           {LINKS.map((link) => {
             const active =
               link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
@@ -39,8 +39,8 @@ export default function Nav() {
                 key={link.href}
                 href={link.href}
                 className={clsx(
-                  "tracking-label transition-colors hover:text-accent",
-                  active ? "text-accent" : "text-foreground-soft"
+                  "tracking-label transition-colors hover:text-foreground",
+                  active ? "text-foreground" : "text-foreground-soft"
                 )}
               >
                 {link.label}

@@ -10,25 +10,20 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div
-      className={clsx(
-        "rounded-2xl border border-hairline bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-        className
-      )}
-    >
+    <div className={clsx("rounded-xl border border-hairline bg-surface", className)}>
       {children}
     </div>
   );
 }
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 const variants = {
-  accent: "bg-accent text-accent-ink hover:bg-accent-dark",
-  light: "bg-foreground text-background hover:bg-foreground/90",
+  light: "bg-foreground text-background hover:bg-foreground/88",
   outline: "border border-hairline-strong text-foreground hover:bg-surface-hover",
-  ghost: "text-foreground-soft hover:text-foreground hover:bg-surface-hover",
+  accent: "border border-accent/50 text-accent hover:bg-accent/10",
+  ghost: "text-foreground-soft hover:text-foreground",
 };
 
 export function Button({
@@ -65,15 +60,15 @@ export function Badge({
   tone?: "neutral" | "accent" | "green" | "red";
 }) {
   const tones = {
-    neutral: "bg-surface-hover text-foreground-soft border border-hairline",
-    accent: "bg-accent text-accent-ink",
-    green: "bg-tone-green/15 text-tone-green border border-tone-green/30",
-    red: "bg-tone-red/15 text-tone-red border border-tone-red/30",
+    neutral: "border border-hairline-strong text-foreground-soft",
+    accent: "border border-accent/40 text-accent",
+    green: "border border-tone-green/35 text-tone-green",
+    red: "border border-tone-red/35 text-tone-red",
   };
   return (
     <span
       className={clsx(
-        "tracking-label inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium",
+        "tracking-label inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium",
         tones[tone]
       )}
     >
@@ -86,7 +81,7 @@ export function StatTile({ label, value, hint }: { label: string; value: string;
   return (
     <Card className="p-5">
       <div className="tracking-label text-xs text-foreground-soft">{label}</div>
-      <div className="mt-2 font-display text-3xl text-foreground">{value}</div>
+      <div className="font-display mt-2 text-2xl text-foreground">{value}</div>
       {hint && <div className="mt-1 text-xs text-foreground-soft">{hint}</div>}
     </Card>
   );

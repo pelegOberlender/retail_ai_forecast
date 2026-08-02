@@ -176,7 +176,7 @@ export default function NewBuyPlanPage() {
         {error && <p className="mt-4 text-sm text-tone-red">{error}</p>}
 
         <div className="mt-8 flex justify-center">
-          <Button variant="accent" className="px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
+          <Button variant="light" className="px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
             {submitting ? "Generating buy plan…" : "Generate Buy Plan"}
           </Button>
         </div>
