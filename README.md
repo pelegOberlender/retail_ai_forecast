@@ -73,10 +73,16 @@ Open [http://localhost:3000](http://localhost:3000).
    optional total budget, then "Generate Buy Plan" — you'll land on the
    editor for the plan it just created.
 
-   Catalog files need columns for style, category, cost, and price. Header
-   aliases like `SKU`/`style code`, `style`/`product`/`name`, `category`/`type`,
-   `cost`/`wholesale`, `price`/`retail` are all recognized — see
-   `src/lib/parseCatalog.ts` for the full list.
+   Only an item-name column is strictly required — category is inferred by
+   keyword when absent, and cost/price default to $0 (with a warning) rather
+   than blocking the upload, so a real supplier linesheet import doesn't
+   fail on missing columns. Header aliases include Hebrew (`שם פריט`, `צבע`,
+   `מותג`, `ברקוד פריט`, …) alongside English (`style`/`product`/`name`,
+   `category`/`type`, `cost`/`wholesale`, `price`/`retail`) — see
+   `src/lib/parseCatalog.ts` for the full list. For `.xlsx`/`.xls` files,
+   embedded product photos are extracted automatically (via ExcelJS, saved
+   to `public/uploads/catalog/`) and show up as thumbnails in the buy plan
+   editor — no image-URL column needed.
 4. **Buy plan editor** (`/buy-plans/[id]`) — each line shows the recommended
    quantity, a confidence badge, and a "why?" link with the rationale. Edit
    the "Final Qty" column directly, "Save changes", then "Lock plan" once
@@ -92,30 +98,28 @@ Open [http://localhost:3000](http://localhost:3000).
 - To wipe everything and start clean: delete `prisma/dev.db`, then re-run
   `npx prisma db push && npm run db:seed`.
 
-## Recommendation engine — current state and roadmap
+## Recommendation engine — live AI, with a deterministic fallback
 
-The recommendation engine (`src/lib/recommend.ts`) is currently **phase 1: a
-deterministic, rule-based engine built entirely on this retailer's own historic
-order data**. For each catalog item it:
+The recommendation engine (`src/lib/recommend.ts`) combines this retailer's
+own historic order data with two live signals, each gated behind its own
+API key so the app works fully without either:
 
-- Finds comparable historic SKUs (same category, same-season analogs, token
-  overlap on style name/color) and reads off their sell-through.
-- Combines that with a placeholder trend score (`brandBuzzScore` in
-  `recommend.ts`) standing in for a live signal.
-- Produces a recommended quantity, confidence level, and a written rationale.
+- **Trend score** (`src/lib/ai/trend.ts`) — a Claude agent (`claude-opus-5`)
+  with the web search tool, researching real trend momentum for the
+  brand/category/quarter. Called once per category per plan (not once per
+  item), and its written rationale is used directly in each line's "why?"
+  panel. Falls back to a deterministic hash-based heuristic
+  (`brandBuzzScore` in `recommend.ts`) when `ANTHROPIC_API_KEY` is unset.
+- **Catalog-to-history similarity** (`src/lib/ai/embeddings.ts`) — Voyage AI
+  embeddings (`voyage-3-lite`) comparing each catalog item to historic SKUs
+  in the same category, replacing plain token overlap. Falls back to
+  token-overlap matching when `VOYAGE_API_KEY` is unset.
 
-This was an intentional first step so the full app (upload → recommend → edit
-→ lock → export) could be built and tested end-to-end before wiring live AI.
-The next phase, not yet implemented, is to replace two specific seams without
-touching anything else in the app:
-
-- `brandBuzzScore(...)` → a Claude agent call with the web search tool,
-  reading real trend signal for the given brand/category/quarter.
-- `similarity(...)` → embeddings-based similarity (e.g. Voyage AI) instead of
-  token overlap, for matching catalog items to historic SKUs.
-
-Both require API keys (`ANTHROPIC_API_KEY`, embeddings provider key) that
-aren't configured yet.
+Set either key in `.env` (see `.env.example`) and the corresponding signal
+activates automatically on the next "Generate Buy Plan" — no code changes
+needed. With no keys set, everything still works end to end on the
+deterministic fallbacks; you'll just see heuristic trend/rationale text
+instead of live web research.
 
 ## Data model
 

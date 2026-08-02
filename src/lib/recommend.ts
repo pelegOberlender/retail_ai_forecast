@@ -1,12 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import type { HistoricOrder } from "@prisma/client";
+import { getTrendScore } from "@/lib/ai/trend";
+import { embedTexts, cosineSimilarity } from "@/lib/ai/embeddings";
 
 /**
- * Phase 1 recommendation engine: deterministic and rule-based, built entirely on
- * this retailer's own historic order data. It stands in for the eventual pipeline
- * (Claude agent + web search for live trend signal, Voyage embeddings for
- * catalog-to-history similarity) without changing the shape the UI consumes —
- * `generateBuyPlanRecommendations` is the single seam to swap when that's wired in.
+ * Buy plan recommendation engine, built on this retailer's own historic order
+ * data plus two optional live signals that activate automatically once their
+ * API keys are configured — no code changes needed when the keys arrive:
+ *
+ * - `getTrendScore` (src/lib/ai/trend.ts): a Claude agent with the web search
+ *   tool, researching real trend momentum for a brand/category/quarter.
+ *   Falls back to a deterministic hash-based heuristic when ANTHROPIC_API_KEY
+ *   is unset.
+ * - `embedTexts` (src/lib/ai/embeddings.ts): Voyage AI embeddings for
+ *   catalog-to-history similarity. Falls back to token-overlap similarity
+ *   when VOYAGE_API_KEY is unset.
  */
 
 export type CatalogItemInput = {
@@ -53,8 +61,8 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 1 && !STOPWORDS.has(t));
 }
 
-// Token-overlap similarity — a stand-in for embedding cosine similarity later.
-function similarity(a: string, b: string): number {
+// Token-overlap similarity — fallback when embeddings aren't configured.
+function tokenSimilarity(a: string, b: string): number {
   const ta = new Set(tokenize(a));
   const tb = new Set(tokenize(b));
   if (ta.size === 0 || tb.size === 0) return 0;
@@ -68,8 +76,8 @@ function quarterNumber(quarter: string): number {
   return Number.isFinite(n) ? n : 1;
 }
 
-// Deterministic pseudo-trend signal (hash-based) standing in for a future live
-// web-search trend read on `brandFocus` + category for the target quarter.
+// Deterministic pseudo-trend signal (hash-based) — fallback when the live
+// Claude + web search trend agent isn't configured (see src/lib/ai/trend.ts).
 function brandBuzzScore(brandFocus: string | undefined, category: string, quarter: string): number {
   const key = `${brandFocus ?? "general"}::${category}::${quarter}`;
   let hash = 0;
@@ -83,6 +91,25 @@ function clampQty(qty: number): number {
   return Math.max(12, Math.min(400, Math.round(qty / 5) * 5));
 }
 
+/** Builds a per-pair similarity lookup for one category — embeddings when available, token overlap otherwise. */
+async function buildSimilarityFn(
+  categoryItems: CatalogItemInput[],
+  candidates: HistoricOrder[]
+): Promise<(itemIdx: number, candidateIdx: number) => number> {
+  const catalogTexts = categoryItems.map((i) => `${i.styleName} ${i.color ?? ""}`.trim());
+  const historicTexts = candidates.map((c) => `${c.styleName} ${c.color}`.trim());
+
+  const vectors = catalogTexts.length + historicTexts.length > 0 ? await embedTexts([...catalogTexts, ...historicTexts]) : null;
+
+  if (vectors) {
+    const catalogVectors = vectors.slice(0, catalogTexts.length);
+    const historicVectors = vectors.slice(catalogTexts.length);
+    return (itemIdx, candidateIdx) => cosineSimilarity(catalogVectors[itemIdx], historicVectors[candidateIdx]);
+  }
+
+  return (itemIdx, candidateIdx) => tokenSimilarity(catalogTexts[itemIdx], historicTexts[candidateIdx]);
+}
+
 export async function generateBuyPlanRecommendations(
   items: CatalogItemInput[],
   options: GenerateOptions
@@ -91,73 +118,90 @@ export async function generateBuyPlanRecommendations(
   const categories = Array.from(new Set(items.map((i) => i.category)));
 
   const historicByCategory = new Map<string, HistoricOrder[]>();
-  await Promise.all(
-    categories.map(async (category) => {
+  const trendByCategory = new Map<string, { score: number; rationale: string } | null>();
+
+  await Promise.all([
+    ...categories.map(async (category) => {
       const rows = await prisma.historicOrder.findMany({
         where: { category },
         orderBy: { orderDate: "desc" },
       });
       historicByCategory.set(category, rows);
-    })
-  );
+    }),
+    ...categories.map(async (category) => {
+      const result = await getTrendScore(options.brandFocus, category, options.quarter);
+      trendByCategory.set(category, result);
+    }),
+  ]);
 
   const results: RecommendationResult[] = [];
 
-  for (const item of items) {
-    const candidates = historicByCategory.get(item.category) ?? [];
+  for (const category of categories) {
+    const categoryItems = items.filter((i) => i.category === category);
+    const candidates = historicByCategory.get(category) ?? [];
+    const liveTrend = trendByCategory.get(category) ?? null;
+    const simFn = await buildSimilarityFn(categoryItems, candidates);
 
-    // Prefer same-season analogs (same calendar quarter, prior years) which is
-    // the strongest real signal we have for a forecast.
-    const scored = candidates
-      .map((c) => {
-        const sameSeason = quarterNumber(c.season) === targetQ ? 0.25 : 0;
-        const sim = similarity(item.styleName, c.styleName) + (item.color && c.color === item.color ? 0.15 : 0);
-        return { order: c, score: sim + sameSeason };
-      })
-      .sort((a, b) => b.score - a.score);
+    for (let itemIdx = 0; itemIdx < categoryItems.length; itemIdx++) {
+      const item = categoryItems[itemIdx];
 
-    const strongMatches = scored.filter((s) => s.score >= 0.2).slice(0, 6);
-    const pool = strongMatches.length > 0 ? strongMatches.map((s) => s.order) : candidates;
+      // Prefer same-season analogs (same calendar quarter, prior years) which is
+      // the strongest real signal we have for a forecast.
+      const scored = candidates
+        .map((c, candidateIdx) => {
+          const sameSeason = quarterNumber(c.season) === targetQ ? 0.25 : 0;
+          const sim = simFn(itemIdx, candidateIdx) + (item.color && c.color === item.color ? 0.15 : 0);
+          return { order: c, score: sim + sameSeason };
+        })
+        .sort((a, b) => b.score - a.score);
 
-    const matchCount = strongMatches.length;
-    const confidence: RecommendationResult["confidence"] =
-      matchCount >= 4 ? "high" : matchCount >= 1 ? "medium" : "low";
+      const strongMatches = scored.filter((s) => s.score >= 0.2).slice(0, 6);
+      const pool = strongMatches.length > 0 ? strongMatches.map((s) => s.order) : candidates;
 
-    const avgSellThrough =
-      pool.length > 0 ? pool.reduce((sum, o) => sum + o.sellThroughPct, 0) / pool.length : null;
-    const avgQtyOrdered =
-      pool.length > 0 ? pool.reduce((sum, o) => sum + o.qtyOrdered, 0) / pool.length : 80;
+      const matchCount = strongMatches.length;
+      const confidence: RecommendationResult["confidence"] =
+        matchCount >= 4 ? "high" : matchCount >= 1 ? "medium" : "low";
 
-    const trendScore = Math.round(
-      (avgSellThrough ?? 55) * 0.5 + brandBuzzScore(options.brandFocus, item.category, options.quarter) * 0.5
-    );
+      const avgSellThrough =
+        pool.length > 0 ? pool.reduce((sum, o) => sum + o.sellThroughPct, 0) / pool.length : null;
+      const avgQtyOrdered =
+        pool.length > 0 ? pool.reduce((sum, o) => sum + o.qtyOrdered, 0) / pool.length : 80;
 
-    const momentum = 0.7 + (trendScore / 100) * 0.6; // 0.7x - 1.3x
-    const recommendedQty = clampQty(avgQtyOrdered * momentum);
+      const trendScore = liveTrend
+        ? Math.round((avgSellThrough ?? 55) * 0.4 + liveTrend.score * 0.6)
+        : Math.round((avgSellThrough ?? 55) * 0.5 + brandBuzzScore(options.brandFocus, category, options.quarter) * 0.5);
 
-    const bestMatch = strongMatches[0]?.order ?? null;
+      const momentum = 0.7 + (trendScore / 100) * 0.6; // 0.7x - 1.3x
+      const recommendedQty = clampQty(avgQtyOrdered * momentum);
 
-    const rationale = bestMatch
-      ? `Comparable to ${bestMatch.sku} (${bestMatch.styleName}, ${bestMatch.season}) which sold through ${bestMatch.sellThroughPct.toFixed(1)}%. Trend score ${trendScore}/100 for ${item.category}${options.brandFocus ? ` and "${options.brandFocus}"` : ""} heading into ${options.quarter}.`
-      : `No close historic match — using ${item.category} category average (${(avgSellThrough ?? 55).toFixed(1)}% sell-through). Trend score ${trendScore}/100 for ${options.quarter}.`;
+      const bestMatch = strongMatches[0]?.order ?? null;
 
-    results.push({
-      sku: item.sku ?? null,
-      styleName: item.styleName,
-      category: item.category,
-      color: item.color ?? null,
-      brand: item.brand ?? null,
-      unitCost: item.unitCost,
-      unitPrice: item.unitPrice,
-      recommendedQty,
-      finalQty: recommendedQty,
-      trendScore,
-      confidence,
-      rationale,
-      similarHistoricSku: bestMatch?.sku ?? null,
-      sellThroughForecastPct: avgSellThrough,
-      imageUrl: item.imageUrl ?? null,
-    });
+      const historicSentence = bestMatch
+        ? `Comparable to ${bestMatch.sku} (${bestMatch.styleName}, ${bestMatch.season}) which sold through ${bestMatch.sellThroughPct.toFixed(1)}%.`
+        : `No close historic match — using ${category} category average (${(avgSellThrough ?? 55).toFixed(1)}% sell-through).`;
+      const trendSentence = liveTrend
+        ? liveTrend.rationale
+        : `Trend score ${trendScore}/100 for ${category}${options.brandFocus ? ` and "${options.brandFocus}"` : ""} heading into ${options.quarter}.`;
+      const rationale = `${historicSentence} ${trendSentence}`;
+
+      results.push({
+        sku: item.sku ?? null,
+        styleName: item.styleName,
+        category: item.category,
+        color: item.color ?? null,
+        brand: item.brand ?? null,
+        unitCost: item.unitCost,
+        unitPrice: item.unitPrice,
+        recommendedQty,
+        finalQty: recommendedQty,
+        trendScore,
+        confidence,
+        rationale,
+        similarHistoricSku: bestMatch?.sku ?? null,
+        sellThroughForecastPct: avgSellThrough,
+        imageUrl: item.imageUrl ?? null,
+      });
+    }
   }
 
   if (options.totalBudget && options.totalBudget > 0) {
