@@ -41,9 +41,9 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [q, setQ] = useState("");
-  const [orders, setOrders] = useState<HistoricOrder[]>([]);
+  const [orders, setOrders] = useState<HistoricOrder[] | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const loading = orders === null;
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -56,16 +56,12 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetch(`/api/historic-orders${queryString ? `?${queryString}` : ""}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
         setOrders(data.orders);
         setSummary(data.summary);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -129,14 +125,14 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
                   </td>
                 </tr>
               )}
-              {!loading && orders.length === 0 && (
+              {orders && orders.length === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-10 text-center text-ink-soft">
                     No orders match these filters.
                   </td>
                 </tr>
               )}
-              {!loading &&
+              {orders &&
                 orders.map((o) => (
                   <tr key={o.id} className="border-t border-hairline hover:bg-cream-card/60">
                     <td className="px-4 py-2.5 font-mono text-xs text-ink-soft">{o.sku}</td>
