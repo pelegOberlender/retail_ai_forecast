@@ -85,7 +85,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
         </div>
         <a
           href={`/api/historic-orders?${queryString ? `${queryString}&` : ""}format=xlsx`}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium tracking-wide text-accent-ink transition-colors hover:bg-accent-dark sm:self-end"
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/88 sm:self-end"
         >
           Export to Excel
         </a>
