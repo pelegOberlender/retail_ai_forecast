@@ -26,7 +26,7 @@ export default async function Home() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle at 15% 20%, rgba(176,141,87,0.18), transparent 45%), radial-gradient(circle at 85% 0%, rgba(176,141,87,0.14), transparent 40%), linear-gradient(180deg, #f4eee0 0%, #faf7f1 60%)",
+              "radial-gradient(circle at 15% 20%, rgba(176,141,87,0.16), transparent 45%), radial-gradient(circle at 85% 0%, rgba(176,141,87,0.12), transparent 40%), linear-gradient(180deg, #f7f2e6 0%, #ffffff 65%)",
           }}
         />
         <svg

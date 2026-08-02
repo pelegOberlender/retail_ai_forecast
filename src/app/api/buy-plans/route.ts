@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   const buffer = await file.arrayBuffer();
-  const { items, errors } = parseCatalogFile(buffer);
+  const { items, errors } = await parseCatalogFile(buffer, file.name);
 
   if (items.length === 0) {
     return Response.json({ error: errors[0] ?? "Could not parse any catalog rows.", errors }, { status: 400 });

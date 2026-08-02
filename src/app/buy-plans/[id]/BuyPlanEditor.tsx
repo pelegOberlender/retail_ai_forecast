@@ -20,6 +20,7 @@ type BuyPlanItem = {
   rationale: string;
   similarHistoricSku: string | null;
   sellThroughForecastPct: number | null;
+  imageUrl: string | null;
 };
 
 type BuyPlan = {
@@ -162,9 +163,23 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                 <Fragment key={item.id}>
                   <tr className="border-t border-hairline align-top hover:bg-cream-card/50">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-ink">{item.styleName}</div>
-                      <div className="text-xs text-ink-soft">
-                        {item.sku ?? "—"} {item.color ? `· ${item.color}` : ""}
+                      <div className="flex items-center gap-3">
+                        {item.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.imageUrl}
+                            alt={item.styleName}
+                            className="h-10 w-10 flex-shrink-0 rounded-md border border-hairline object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 flex-shrink-0 rounded-md border border-dashed border-hairline bg-cream-card" />
+                        )}
+                        <div>
+                          <div className="font-medium text-ink">{item.styleName}</div>
+                          <div className="text-xs text-ink-soft">
+                            {item.sku ?? "—"} {item.color ? `· ${item.color}` : ""}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{item.category}</td>

@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf7f1;
+  --background: #ffffff;
   --foreground: #1c1917;
-  --cream: #faf7f1;
+  --cream: #ffffff;
+  --nav-bg: #faf7f1;
   --cream-card: #f4eee0;
   --cream-card-hover: #ede4cf;
   --ink: #1c1917;
@@ -18,6 +19,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-cream: var(--cream);
+  --color-nav: var(--nav-bg);
   --color-cream-card: var(--cream-card);
   --color-cream-card-hover: var(--cream-card-hover);
   --color-ink: var(--ink);
