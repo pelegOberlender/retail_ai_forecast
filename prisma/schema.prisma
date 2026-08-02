@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model HistoricOrder {
+  id             String   @id @default(cuid())
+  sku            String
+  styleName      String
+  category       String
+  color          String
+  size           String
+  brand          String
+  season         String // e.g. "2025-Q1"
+  orderDate      DateTime
+  qtyOrdered     Int
+  qtySold        Int
+  unitCost       Float
+  unitPrice      Float
+  revenue        Float
+  sellThroughPct Float
+  createdAt      DateTime @default(now())
+
+  @@index([category])
+  @@index([season])
+  @@index([brand])
+}
+
+model BuyPlan {
+  id          String   @id @default(cuid())
+  name        String
+  quarter     String // target quarter e.g. "2026-Q3"
+  brandFocus  String? // brand/מותג used for trend research
+  status      String   @default("draft") // draft | locked
+  totalBudget Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lockedAt    DateTime?
+
+  items BuyPlanItem[]
+}
+
+model BuyPlanItem {
+  id                     String   @id @default(cuid())
+  buyPlanId              String
+  buyPlan                BuyPlan  @relation(fields: [buyPlanId], references: [id], onDelete: Cascade)
+  sku                    String?
+  styleName              String
+  category               String
+  color                  String?
+  brand                  String?
+  unitCost               Float
+  unitPrice              Float
+  recommendedQty         Int
+  finalQty               Int
+  trendScore             Float // 0-100
+  confidence             String // low | medium | high
+  rationale              String
+  similarHistoricSku     String?
+  sellThroughForecastPct Float?
+  imageUrl               String?
+  createdAt              DateTime @default(now())
+
+  @@index([buyPlanId])
+}
