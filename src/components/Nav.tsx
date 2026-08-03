@@ -24,7 +24,7 @@ export default function Nav() {
             <path
               d="M3 19L9 9.5L12.5 14.5L21 3"
               stroke="currentColor"
-              strokeWidth="2.4"
+              strokeWidth="2"
               strokeLinecap="square"
               strokeLinejoin="miter"
             />

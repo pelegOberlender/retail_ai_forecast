@@ -102,7 +102,7 @@ export default function NewBuyPlanPage() {
             <path
               d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 3v12m0-12l-4 4m4-4l4 4"
               stroke="currentColor"
-              strokeWidth="1.6"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -126,7 +126,7 @@ export default function NewBuyPlanPage() {
 
         <p className="mt-3 text-center text-xs text-foreground-soft">
           No catalog handy?{" "}
-          <a href="/sample-catalog.csv" download className="text-accent underline hover:text-accent-dark">
+          <a href="/sample-catalog.csv" download className="text-accent-dark underline hover:text-foreground">
             Download a sample catalog
           </a>{" "}
           to try it out.

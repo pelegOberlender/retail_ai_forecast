@@ -137,7 +137,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
       </div>
 
       {locked && (
-        <Card className="border-accent/30 bg-accent/10 p-4 text-sm text-accent">
+        <Card className="border-accent/30 bg-accent/10 p-4 text-sm text-accent-dark">
           This plan is locked. Unlock it to adjust quantities before export.
         </Card>
       )}
@@ -205,7 +205,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                       {!locked && item.finalQty !== item.recommendedQty && (
                         <button
                           onClick={() => resetToRecommended(item.id)}
-                          className="mt-1 block w-full text-right text-[11px] text-foreground-soft underline hover:text-accent"
+                          className="mt-1 block w-full text-right text-[11px] text-foreground-soft underline hover:text-accent-dark"
                         >
                           reset
                         </button>
@@ -215,7 +215,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                        className="text-xs text-foreground-soft underline hover:text-accent"
+                        className="text-xs text-foreground-soft underline hover:text-accent-dark"
                       >
                         {expandedId === item.id ? "hide" : "why?"}
                       </button>
