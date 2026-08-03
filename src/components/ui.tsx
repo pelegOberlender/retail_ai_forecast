@@ -79,10 +79,33 @@ export function Badge({
 
 export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <Card className="p-5">
+    <Card className="p-4 sm:p-5">
       <div className="tracking-label text-xs text-foreground-soft">{label}</div>
-      <div className="font-display mt-2 text-2xl text-foreground">{value}</div>
+      <div className="font-display mt-1.5 text-2xl text-foreground">{value}</div>
       {hint && <div className="mt-1 text-xs text-foreground-soft">{hint}</div>}
     </Card>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+  icon,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  icon?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+      {icon && <div className="flex h-11 w-11 items-center justify-center rounded-full border border-hairline-strong text-foreground-soft">{icon}</div>}
+      <div>
+        <p className="font-medium text-foreground">{title}</p>
+        {description && <p className="mt-1 max-w-sm text-sm text-foreground-soft">{description}</p>}
+      </div>
+      {action}
+    </div>
   );
 }

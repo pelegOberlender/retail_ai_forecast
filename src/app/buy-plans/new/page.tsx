@@ -72,13 +72,21 @@ export default function NewBuyPlanPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12 sm:px-10">
-      <div className="mb-8 text-center">
+    <div className="mx-auto max-w-4xl px-6 py-8 sm:px-10 sm:py-10">
+      <div className="mb-6 text-center">
         <h1 className="font-display text-3xl text-foreground sm:text-4xl">Create a Buy Plan</h1>
-        <p className="mx-auto mt-3 max-w-xl text-foreground-soft">
+        <p className="mx-auto mt-2 max-w-xl text-foreground-soft">
           Upload next quarter&apos;s catalog and we&apos;ll recommend order quantities based on
           historic sell-through and trend signal.
         </p>
+      </div>
+
+      <div className="mb-6 flex items-center justify-center gap-2 text-xs text-foreground-soft">
+        <StepDot active label="Upload catalog" />
+        <StepLine />
+        <StepDot active={Boolean(file)} label="Plan details" />
+        <StepLine />
+        <StepDot active={submitting} label="Generate" />
       </div>
 
       <Card className="p-6 sm:p-8">
@@ -138,14 +146,14 @@ export default function NewBuyPlanPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={`${quarter} Buy Plan`}
-              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </Field>
           <Field label="Target quarter">
             <select
               value={quarter}
               onChange={(e) => setQuarter(e.target.value)}
-              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
+              className="w-full cursor-pointer rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
             >
               {quarters.map((q) => (
                 <option key={q} value={q}>
@@ -159,7 +167,7 @@ export default function NewBuyPlanPage() {
               value={brandFocus}
               onChange={(e) => setBrandFocus(e.target.value)}
               placeholder="e.g. Modo Label"
-              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </Field>
           <Field label="Total budget (optional)">
@@ -168,15 +176,28 @@ export default function NewBuyPlanPage() {
               onChange={(e) => setTotalBudget(e.target.value.replace(/[^0-9.]/g, ""))}
               placeholder="e.g. 50000"
               inputMode="decimal"
-              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none focus:border-accent"
+              className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2.5 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </Field>
         </div>
 
-        {error && <p className="mt-4 text-sm text-tone-red">{error}</p>}
+        {error && (
+          <p className="mt-4 flex items-center gap-2 text-sm text-tone-red">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="flex-shrink-0">
+              <path
+                d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 003.82 21h16.36a2 2 0 001.71-2.96L13.71 3.86a2 2 0 00-3.42 0z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {error}
+          </p>
+        )}
 
         <div className="mt-8 flex justify-center">
-          <Button variant="dark" className="px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
+          <Button variant="dark" className="cursor-pointer px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
             {submitting ? "Generating buy plan…" : "Generate Buy Plan"}
           </Button>
         </div>
@@ -192,4 +213,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+function StepDot({ active, label }: { active: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-accent" : "bg-hairline-strong"}`} />
+      <span className={active ? "text-foreground" : ""}>{label}</span>
+    </div>
+  );
+}
+
+function StepLine() {
+  return <span className="h-px w-6 bg-hairline-strong" />;
 }

@@ -12,7 +12,7 @@ export default async function BuyPlanPage({ params }: { params: Promise<{ id: st
   if (!plan) notFound();
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 sm:px-10">
+    <div className="mx-auto max-w-7xl px-6 py-8 sm:px-10 sm:py-10">
       <BuyPlanEditor initialPlan={JSON.parse(JSON.stringify(plan))} />
     </div>
   );

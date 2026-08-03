@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Card, Badge } from "@/components/ui";
+import { Card, Badge, StatTile, EmptyState, Button } from "@/components/ui";
 
 type HistoricOrder = {
   id: string;
@@ -45,6 +45,15 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
   const [summary, setSummary] = useState<Summary | null>(null);
   const loading = orders === null;
 
+  const hasFilters = Boolean(season || category || brand || q);
+
+  function clearFilters() {
+    setSeason("");
+    setCategory("");
+    setBrand("");
+    setQ("");
+  }
+
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     if (season) params.set("season", season);
@@ -70,29 +79,43 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="flex flex-col gap-4 p-5 sm:flex-row sm:flex-wrap sm:items-center">
+      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end">
         <Select label="Quarter" value={season} onChange={setSeason} options={options.seasons} />
         <Select label="Category" value={category} onChange={setCategory} options={options.categories} />
         <Select label="Brand" value={brand} onChange={setBrand} options={options.brands} />
-        <div className="flex-1 min-w-[200px]">
+        <div className="min-w-[200px] flex-1">
           <label className="tracking-label mb-1 block text-xs text-foreground-soft">Search</label>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Style, SKU, or color…"
-            className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none focus:border-accent"
+            className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
           />
         </div>
+        {hasFilters && (
+          <Button variant="ghost" onClick={clearFilters} className="cursor-pointer px-2 py-2 text-xs">
+            Clear filters
+          </Button>
+        )}
         <a
           href={`/api/historic-orders?${queryString ? `${queryString}&` : ""}format=xlsx`}
-          className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/88 sm:self-end"
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/88 sm:self-end"
         >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 3v12m0 0l-4-4m4 4l4-4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           Export to Excel
         </a>
       </Card>
 
       {summary && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile label="Orders" value={summary.count.toLocaleString()} />
           <StatTile label="Units Sold" value={summary.totalUnitsSold.toLocaleString()} />
           <StatTile label="Revenue" value={currency.format(summary.totalRevenue)} />
@@ -118,17 +141,41 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-foreground-soft">
-                    Loading…
-                  </td>
-                </tr>
-              )}
+              {loading &&
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i} className="border-t border-hairline">
+                    {Array.from({ length: 10 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <div className="h-3.5 animate-pulse rounded-full bg-surface-hover" style={{ width: `${40 + ((i * 7 + j * 13) % 45)}%` }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               {orders && orders.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-foreground-soft">
-                    No orders match these filters.
+                  <td colSpan={10}>
+                    <EmptyState
+                      title="No orders match these filters"
+                      description="Try a different quarter, category, or search term."
+                      action={
+                        hasFilters ? (
+                          <Button variant="outline" onClick={clearFilters} className="cursor-pointer text-sm">
+                            Clear filters
+                          </Button>
+                        ) : undefined
+                      }
+                      icon={
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path
+                            d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      }
+                    />
                   </td>
                 </tr>
               )}
@@ -180,7 +227,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none focus:border-accent"
+        className="cursor-pointer rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
       >
         <option value="">All</option>
         {options.map((o) => (
@@ -190,15 +237,6 @@ function Select({
         ))}
       </select>
     </div>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="p-5">
-      <div className="tracking-label text-xs text-foreground-soft">{label}</div>
-      <div className="mt-2 font-display text-2xl text-foreground">{value}</div>
-    </Card>
   );
 }
 

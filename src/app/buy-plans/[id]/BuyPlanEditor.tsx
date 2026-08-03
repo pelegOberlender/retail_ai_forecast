@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Badge, Button } from "@/components/ui";
+import { Card, Badge, Button, StatTile } from "@/components/ui";
 
 type BuyPlanItem = {
   id: string;
@@ -114,22 +114,31 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
         <div className="flex flex-wrap items-center gap-3">
           <a
             href={`/api/buy-plans/${plan.id}/export`}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium tracking-wide text-background hover:bg-foreground/90"
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium tracking-wide text-background hover:bg-foreground/90"
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 3v12m0 0l-4-4m4 4l4-4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             Export to Excel
           </a>
           {!locked && dirty && (
-            <Button variant="outline" onClick={saveChanges} disabled={saving}>
+            <Button variant="outline" onClick={saveChanges} disabled={saving} className="cursor-pointer">
               {saving ? "Saving…" : "Save changes"}
             </Button>
           )}
-          <Button variant={locked ? "outline" : "dark"} onClick={toggleLock} disabled={locking}>
+          <Button variant={locked ? "outline" : "dark"} onClick={toggleLock} disabled={locking} className="cursor-pointer">
             {locking ? "Working…" : locked ? "Unlock plan" : "Lock plan"}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="SKUs" value={String(items.length)} />
         <StatTile label="Total Units" value={totals.totalUnits.toLocaleString()} />
         <StatTile label="Total Cost" value={currency.format(totals.totalCost)} />
@@ -137,7 +146,16 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
       </div>
 
       {locked && (
-        <Card className="border-accent/30 bg-accent/10 p-4 text-sm text-accent-dark">
+        <Card className="flex items-center gap-3 border-accent/30 bg-accent/10 p-4 text-sm text-accent-dark">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden className="flex-shrink-0">
+            <path
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zM8 11V7a4 4 0 118 0v4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           This plan is locked. Unlock it to adjust quantities before export.
         </Card>
       )}
@@ -200,12 +218,12 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                         value={item.finalQty}
                         disabled={locked}
                         onChange={(e) => updateQty(item.id, parseInt(e.target.value || "0", 10))}
-                        className="w-20 rounded-lg border border-hairline bg-surface-hover px-2 py-1 text-right text-sm text-foreground outline-none focus:border-accent disabled:text-foreground-soft"
+                        className="w-20 rounded-lg border border-hairline bg-surface-hover px-2 py-1 text-right text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:text-foreground-soft"
                       />
                       {!locked && item.finalQty !== item.recommendedQty && (
                         <button
                           onClick={() => resetToRecommended(item.id)}
-                          className="mt-1 block w-full text-right text-[11px] text-foreground-soft underline hover:text-accent-dark"
+                          className="mt-1 block w-full cursor-pointer text-right text-[11px] text-foreground-soft underline hover:text-accent-dark"
                         >
                           reset
                         </button>
@@ -215,7 +233,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                        className="text-xs text-foreground-soft underline hover:text-accent-dark"
+                        className="cursor-pointer text-xs text-foreground-soft underline hover:text-accent-dark"
                       >
                         {expandedId === item.id ? "hide" : "why?"}
                       </button>
@@ -240,13 +258,4 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
 
 function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <th className={`px-4 py-3 font-medium ${className}`}>{children}</th>;
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="p-5">
-      <div className="tracking-label text-xs text-foreground-soft">{label}</div>
-      <div className="mt-2 font-display text-2xl text-foreground">{value}</div>
-    </Card>
-  );
 }
