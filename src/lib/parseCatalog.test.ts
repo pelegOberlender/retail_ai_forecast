@@ -89,3 +89,21 @@ test("uses the binary workbook fallback for legacy xls supplier files", async ()
   assert.equal(parsed.rows[0].sku, "LEG-1");
   assert.equal(parsed.rows[0].styleName, "Legacy Trench");
 });
+
+test("detects a workbook header row after leading blank rows", async () => {
+  const worksheet = XLSX.utils.aoa_to_sheet([
+    [],
+    ["מותג", "שם פריט", "צבע", "מקט פריט"],
+    ["MODO", "Tailored Jacket", "Graphite", "MOD-44"],
+  ]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "קטלוג");
+  const binary = XLSX.write(workbook, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
+
+  const parsed = await parseCatalogFile(binary, "supplier.xlsx");
+
+  assert.equal(parsed.rows.length, 1);
+  assert.equal(parsed.rows[0].originalRow, 3);
+  assert.equal(parsed.rows[0].styleName, "Tailored Jacket");
+  assert.equal(parsed.rows[0].sku, "MOD-44");
+});

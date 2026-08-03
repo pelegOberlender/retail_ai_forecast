@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
+import { posix as pathPosix } from "node:path";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import * as XLSX from "xlsx";
 import type { CatalogItemInput } from "@/lib/recommend";
 
@@ -99,6 +101,8 @@ const HEADER_ALIASES: Record<string, CatalogField> = {
   "image url": "imageUrl",
   description: "description",
   "ברקוד פריט": "sku",
+  "בר קוד פריט": "sku",
+  "מקט פריט": "sku",
   "שם פריט": "styleName",
   "תיאור פריט": "description",
   צבע: "color",
@@ -106,6 +110,151 @@ const HEADER_ALIASES: Record<string, CatalogField> = {
   "תמונת פריט": "imageUrl",
   "מקור פריט": "description",
 };
+
+type WorkbookHeader = {
+  rowNumber: number;
+  headers: Map<number, string>;
+  mapping: Record<string, CatalogField>;
+  columnFields: Map<number, CatalogField>;
+};
+
+type EmbeddedWorkbookImage = {
+  rowNumber: number;
+  buffer: Buffer;
+  extension: string;
+};
+
+function xmlAttributes(tag: string): Record<string, string> {
+  const attributes: Record<string, string> = {};
+  for (const match of tag.matchAll(/([\w:]+)="([^"]*)"/g)) attributes[match[1]] = match[2];
+  return attributes;
+}
+
+function xmlTags(xml: string, tag: string): string[] {
+  return [...xml.matchAll(new RegExp(`<${tag}\\b[^>]*>`, "g"))].map((match) => match[0]);
+}
+
+async function zipText(zip: JSZip, path: string): Promise<string | null> {
+  return (await zip.file(path)?.async("string")) ?? null;
+}
+
+async function extractRichCellImages(
+  buffer: ArrayBuffer,
+  workbook: ExcelJS.Workbook
+): Promise<EmbeddedWorkbookImage[]> {
+  const zip = await JSZip.loadAsync(buffer);
+  const [workbookXml, workbookRelsXml, metadataXml, richValuesXml, richValueRelsXml, richValueRelationshipsXml] =
+    await Promise.all([
+      zipText(zip, "xl/workbook.xml"),
+      zipText(zip, "xl/_rels/workbook.xml.rels"),
+      zipText(zip, "xl/metadata.xml"),
+      zipText(zip, "xl/richData/rdrichvalue.xml"),
+      zipText(zip, "xl/richData/richValueRel.xml"),
+      zipText(zip, "xl/richData/_rels/richValueRel.xml.rels"),
+    ]);
+
+  if (
+    !workbookXml ||
+    !workbookRelsXml ||
+    !metadataXml ||
+    !richValuesXml ||
+    !richValueRelsXml ||
+    !richValueRelationshipsXml
+  ) {
+    return [];
+  }
+
+  const firstSheet = xmlTags(workbookXml, "sheet")[0];
+  const sheetRelationshipId = firstSheet ? xmlAttributes(firstSheet)["r:id"] : null;
+  if (!sheetRelationshipId) return [];
+
+  const workbookRelationships = new Map(
+    xmlTags(workbookRelsXml, "Relationship").map((tag) => {
+      const attributes = xmlAttributes(tag);
+      return [attributes.Id, attributes.Target];
+    })
+  );
+  const sheetTarget = workbookRelationships.get(sheetRelationshipId);
+  if (!sheetTarget) return [];
+  const sheetPath = sheetTarget.startsWith("/")
+    ? sheetTarget.slice(1)
+    : pathPosix.normalize(pathPosix.join("xl", sheetTarget));
+  const sheetXml = await zipText(zip, sheetPath);
+  if (!sheetXml) return [];
+
+  const metadataRichValueIndexes = xmlTags(metadataXml, "rc").map((tag) =>
+    Number.parseInt(xmlAttributes(tag).v ?? "-1", 10)
+  );
+  const richValueRelationshipIndexes = [...richValuesXml.matchAll(/<rv\b[^>]*>([\s\S]*?)<\/rv>/g)].map(
+    (match) => Number.parseInt(match[1].match(/<v>(\d+)<\/v>/)?.[1] ?? "-1", 10)
+  );
+  const relationshipIds = xmlTags(richValueRelsXml, "rel").map((tag) => xmlAttributes(tag)["r:id"]);
+  const imageTargets = new Map(
+    xmlTags(richValueRelationshipsXml, "Relationship").map((tag) => {
+      const attributes = xmlAttributes(tag);
+      return [attributes.Id, attributes.Target];
+    })
+  );
+  const mediaByName = new Map(
+    (workbook.model.media ?? [])
+      .filter((media) => media.type === "image" && media.buffer)
+      .map((media) => [media.name, media])
+  );
+
+  const images: EmbeddedWorkbookImage[] = [];
+  for (const cellTag of xmlTags(sheetXml, "c")) {
+    const attributes = xmlAttributes(cellTag);
+    const metadataPosition = Number.parseInt(attributes.vm ?? "0", 10) - 1;
+    if (metadataPosition < 0) continue;
+
+    const richValueIndex = metadataRichValueIndexes[metadataPosition];
+    const relationshipIndex = richValueRelationshipIndexes[richValueIndex];
+    const relationshipId = relationshipIds[relationshipIndex];
+    const target = imageTargets.get(relationshipId);
+    const rowNumber = Number.parseInt(attributes.r?.match(/\d+$/)?.[0] ?? "0", 10);
+    if (!target || rowNumber < 1) continue;
+
+    const fileName = pathPosix.basename(target);
+    const extension = fileName.split(".").pop()?.toLowerCase() ?? "png";
+    const mediaName = fileName.slice(0, -(extension.length + 1));
+    const media = mediaByName.get(mediaName);
+    if (!media?.buffer) continue;
+    images.push({ rowNumber, extension, buffer: Buffer.from(media.buffer as unknown as Uint8Array) });
+  }
+  return images;
+}
+
+function detectWorkbookHeader(sheet: ExcelJS.Worksheet, options: ParseOptions): WorkbookHeader | null {
+  let bestRecognized: (WorkbookHeader & { recognizedCount: number }) | null = null;
+  let fallback: WorkbookHeader | null = null;
+
+  for (let rowNumber = 1; rowNumber <= Math.min(sheet.rowCount, 20); rowNumber += 1) {
+    const headers = new Map<number, string>();
+    sheet.getRow(rowNumber).eachCell({ includeEmpty: false }, (cell, columnNumber) => {
+      const header = toCellText(cell.value);
+      if (header && header.length <= 120) headers.set(columnNumber, header);
+    });
+    if (headers.size === 0) continue;
+
+    const mapping: Record<string, CatalogField> = {};
+    const columnFields = new Map<number, CatalogField>();
+    for (const [columnNumber, header] of headers.entries()) {
+      const field = options.columnMapping?.[header] ?? HEADER_ALIASES[normalizeHeader(header)];
+      if (!field) continue;
+      mapping[header] = field;
+      columnFields.set(columnNumber, field);
+    }
+    const candidate = { rowNumber, headers, mapping, columnFields };
+    const recognizedCount = columnFields.size;
+    if (!fallback && headers.size >= 2) fallback = candidate;
+    if (!bestRecognized || recognizedCount > bestRecognized.recognizedCount) {
+      bestRecognized = { ...candidate, recognizedCount };
+    }
+  }
+
+  if (bestRecognized && bestRecognized.recognizedCount > 0) return bestRecognized;
+  return fallback;
+}
 
 const CATEGORY_KEYWORDS: [RegExp, string][] = [
   [/\bdress(es)?\b/i, "Dresses"],
@@ -329,19 +478,11 @@ async function parseWorkbookWithImages(buffer: ArrayBuffer, options: ParseOption
     return emptyCatalog({ code: "missing_sheet", severity: "error", message: "The file has no sheets." });
   }
 
-  const headers = new Map<number, string>();
-  const mapping: Record<string, CatalogField> = {};
-  const columnFields = new Map<number, CatalogField>();
-  sheet.getRow(1).eachCell((cell, columnNumber) => {
-    const header = toCellText(cell.value);
-    if (!header) return;
-    headers.set(columnNumber, header);
-    const field = options.columnMapping?.[header] ?? HEADER_ALIASES[normalizeHeader(header)];
-    if (field) {
-      columnFields.set(columnNumber, field);
-      mapping[header] = field;
-    }
-  });
+  const detectedHeader = detectWorkbookHeader(sheet, options);
+  if (!detectedHeader) {
+    return emptyCatalog({ code: "missing_rows", severity: "error", message: "No rows were found in the catalog." }, sheet.name);
+  }
+  const { rowNumber: headerRowNumber, headers, mapping, columnFields } = detectedHeader;
 
   if (![...columnFields.values()].includes("styleName")) {
     return emptyCatalog(
@@ -359,6 +500,7 @@ async function parseWorkbookWithImages(buffer: ArrayBuffer, options: ParseOption
   const parseIssues: CatalogValidationIssue[] = [];
   const rowImageMap = new Map<number, string>();
   const images = sheet.getImages();
+  const richCellImages = await extractRichCellImages(buffer, workbook);
   if (options.onImage) {
     for (const image of images) {
       const media = workbook.model.media[Number(image.imageId)];
@@ -380,11 +522,24 @@ async function parseWorkbookWithImages(buffer: ArrayBuffer, options: ParseOption
         });
       }
     }
+    for (const image of richCellImages) {
+      try {
+        const imageRef = await options.onImage(image);
+        rowImageMap.set(image.rowNumber, imageRef);
+      } catch {
+        parseIssues.push({
+          code: "image_upload_failed",
+          severity: "warning",
+          row: image.rowNumber,
+          message: `Row ${image.rowNumber}: the in-cell image could not be stored.`,
+        });
+      }
+    }
   }
 
   const drafts: DraftRow[] = [];
   let sourceRowCount = 0;
-  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
+  for (let rowNumber = headerRowNumber + 1; rowNumber <= sheet.rowCount; rowNumber += 1) {
     const sourceRow = sheet.getRow(rowNumber);
     const rawRow: Record<string, RawValue> = {};
     const values: DraftRow["values"] = {};
@@ -408,7 +563,15 @@ async function parseWorkbookWithImages(buffer: ArrayBuffer, options: ParseOption
     drafts.push({ originalRow: rowNumber, values, rawRow, imageRef: rowImageMap.get(rowNumber) });
   }
 
-  return finalizeRows(drafts, mapping, [...headers.values()], sheet.name, parseIssues, sourceRowCount, images.length);
+  return finalizeRows(
+    drafts,
+    mapping,
+    [...headers.values()],
+    sheet.name,
+    parseIssues,
+    sourceRowCount,
+    images.length + richCellImages.length
+  );
 }
 
 function parseSheetWorkbook(workbook: XLSX.WorkBook, options: ParseOptions): ParsedCatalog {
