@@ -3,11 +3,17 @@ import { LinkButton } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
 
 export default async function Home() {
-  const [orderCount, quarterRows, avgSellThrough, planCount] = await Promise.all([
+  const [orderCount, quarterRows, avgSellThrough, planCount, topCategories] = await Promise.all([
     prisma.historicOrder.count(),
     prisma.historicOrder.findMany({ distinct: ["season"], select: { season: true } }),
     prisma.historicOrder.aggregate({ _avg: { sellThroughPct: true } }),
     prisma.buyPlan.count(),
+    prisma.historicOrder.groupBy({
+      by: ["category"],
+      _avg: { sellThroughPct: true },
+      orderBy: { _avg: { sellThroughPct: "desc" } },
+      take: 4,
+    }),
   ]);
 
   const stats = [
@@ -44,27 +50,52 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       <section className="border-b border-hairline">
-        <div className="mx-auto flex max-w-4xl flex-col items-start gap-6 px-6 pt-24 pb-24 sm:px-10 sm:pt-28 sm:pb-32">
-          <Reveal>
-            <h1 className="font-display text-4xl uppercase leading-[1.12] text-foreground sm:text-5xl">
-              A buy plan for every quarter,
-              <br />
-              built on your <span className="text-accent">retail</span> data
-            </h1>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="max-w-xl text-balance text-base text-foreground-soft sm:text-lg">
-              Upload next quarter&apos;s catalog and get a buy plan built from your own sales
-              history and current trend signal.
-            </p>
-          </Reveal>
-          <Reveal delay={0.16} className="mt-2 flex flex-wrap items-center gap-3">
-            <LinkButton href="/buy-plans/new" variant="light" className="px-6 py-3 text-[15px]">
-              Upload your catalog
-            </LinkButton>
-            <LinkButton href="/historic-orders" variant="outline" className="px-6 py-3 text-[15px]">
-              View historic orders
-            </LinkButton>
+        <div className="mx-auto grid max-w-7xl gap-12 px-6 pt-24 pb-24 sm:px-10 sm:pt-28 sm:pb-32 lg:grid-cols-[1.3fr_0.7fr] lg:items-center lg:gap-12">
+          <div className="flex flex-col items-start gap-6">
+            <Reveal>
+              <h1 className="font-display text-4xl uppercase leading-[1.12] text-foreground sm:text-5xl">
+                A buy plan built on your <span className="text-accent">retail</span> data
+              </h1>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <p className="max-w-xl text-balance text-base text-foreground-soft sm:text-lg">
+                Upload next quarter&apos;s catalog and get a buy plan built from your own sales
+                history and current trend signal.
+              </p>
+            </Reveal>
+            <Reveal delay={0.16} className="mt-2 flex flex-wrap items-center gap-3">
+              <LinkButton href="/buy-plans/new" variant="light" className="px-6 py-3 text-[15px]">
+                Upload your catalog
+              </LinkButton>
+              <LinkButton href="/historic-orders" variant="outline" className="px-6 py-3 text-[15px]">
+                View historic orders
+              </LinkButton>
+            </Reveal>
+          </div>
+
+          <Reveal delay={0.24}>
+            <div className="rounded-xl border border-hairline bg-surface p-6">
+              <div className="tracking-label text-[10px] text-foreground-soft">Top categories by sell-through</div>
+              <div className="mt-5 flex flex-col gap-4">
+                {topCategories.map((c) => {
+                  const pct = c._avg.sellThroughPct ?? 0;
+                  return (
+                    <div key={c.category}>
+                      <div className="flex items-baseline justify-between text-sm">
+                        <span className="text-foreground">{c.category}</span>
+                        <span className="font-display text-foreground">{pct.toFixed(1)}%</span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
+                        <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, pct)}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-5 border-t border-hairline pt-4 text-xs text-foreground-soft">
+                From {orderCount.toLocaleString()} historic orders across {quarterRows.length} quarters.
+              </div>
+            </div>
           </Reveal>
         </div>
       </section>
