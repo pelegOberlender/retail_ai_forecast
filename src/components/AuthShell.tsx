@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import heroImage from "../../public/modo-fashion-intelligence-hero.png";
+import authShowroomImage from "../../public/modo-auth-showroom-portrait.jpg";
 
 export function AuthShell({
   title,
@@ -28,14 +28,14 @@ export function AuthShell({
       >
         <div className="absolute inset-0">
           <Image
-            src={heroImage}
-            alt="Fashion buyers reviewing a seasonal collection in a showroom"
+            src={authShowroomImage}
+            alt="A fashion buyer reviewing a seasonal collection in a showroom"
             fill
             priority
             placeholder="blur"
             quality={90}
             sizes="(min-width: 1280px) 38vw, 42vw"
-            className="object-cover object-[61%_center] opacity-82"
+            className="scale-[1.15] object-cover object-[54%_38%] opacity-82"
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent from-35% to-ink-band/75" />
