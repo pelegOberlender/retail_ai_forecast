@@ -19,7 +19,7 @@ export default async function BuyPlansPage() {
             Every buy plan you&apos;ve generated, by quarter, draft or locked and ready to send.
           </p>
         </div>
-        <LinkButton href="/buy-plans/new" variant="light" className="px-6 py-3 text-[15px]">
+        <LinkButton href="/buy-plans/new" variant="dark" className="px-6 py-3 text-[15px]">
           New buy plan
         </LinkButton>
       </div>
@@ -27,7 +27,7 @@ export default async function BuyPlansPage() {
       {plans.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-foreground-soft">No buy plans yet.</p>
-          <LinkButton href="/buy-plans/new" variant="light" className="mt-4 inline-flex px-6 py-2.5 text-sm">
+          <LinkButton href="/buy-plans/new" variant="dark" className="mt-4 inline-flex px-6 py-2.5 text-sm">
             Create your first buy plan
           </LinkButton>
         </Card>

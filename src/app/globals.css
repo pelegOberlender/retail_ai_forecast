@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a09;
-  --foreground: #f4f3ee;
-  --foreground-soft: #98968d;
-  --nav-bg: #0a0a09;
-  --surface: #141412;
-  --surface-hover: #1c1c19;
-  --hairline: rgba(244, 243, 238, 0.1);
-  --hairline-strong: rgba(244, 243, 238, 0.22);
-  --accent: #d9e6a3;
-  --accent-ink: #14170a;
-  --accent-dark: #c3d17f;
-  --tone-green: #8fd19e;
-  --tone-red: #e0897f;
-  --paper: #f4f2ec;
-  --paper-ink: #14130f;
+  --background: #faf8f2;
+  --foreground: #1c1b17;
+  --foreground-soft: #6e6b5c;
+  --nav-bg: #ffffff;
+  --surface: #f2efe3;
+  --surface-hover: #eae5d5;
+  --hairline: #e2dcc8;
+  --hairline-strong: #cfc7ac;
+  --accent: #6b7a58;
+  --accent-ink: #ffffff;
+  --accent-dark: #545f45;
+  --accent-soft: #dde4d1;
+  --tone-green: #4f7a52;
+  --tone-red: #a34d3f;
+  --ink-band: #2a2a22;
 }
 
 @theme inline {
@@ -30,11 +30,12 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-dark: var(--accent-dark);
+  --color-accent-soft: var(--accent-soft);
   --color-tone-green: var(--tone-green);
   --color-tone-red: var(--tone-red);
-  --color-paper: var(--paper);
-  --color-paper-ink: var(--paper-ink);
+  --color-ink-band: var(--ink-band);
   --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
 }
 
 body {
@@ -44,8 +45,8 @@ body {
 }
 
 .font-display {
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  font-family: var(--font-serif), Georgia, serif;
+  letter-spacing: -0.01em;
 }
 
 .tracking-label {

@@ -10,7 +10,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={clsx("rounded-xl border border-hairline bg-surface", className)}>
+    <div className={clsx("rounded-xl border border-hairline bg-white", className)}>
       {children}
     </div>
   );
@@ -20,9 +20,9 @@ const buttonBase =
   "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 const variants = {
-  light: "bg-foreground text-background hover:bg-foreground/88",
-  outline: "border border-hairline-strong text-foreground hover:bg-surface-hover",
-  accent: "border border-accent/50 text-accent hover:bg-accent/10",
+  dark: "bg-ink-band text-white hover:bg-ink-band/88",
+  outline: "border border-hairline-strong bg-white text-foreground hover:bg-surface",
+  accent: "bg-accent text-accent-ink hover:bg-accent-dark",
   ghost: "text-foreground-soft hover:text-foreground",
 };
 
@@ -61,9 +61,9 @@ export function Badge({
 }) {
   const tones = {
     neutral: "border border-hairline-strong text-foreground-soft",
-    accent: "border border-accent/40 text-accent",
-    green: "border border-tone-green/35 text-tone-green",
-    red: "border border-tone-red/35 text-tone-red",
+    accent: "bg-accent-soft text-accent-dark",
+    green: "border border-tone-green/30 text-tone-green",
+    red: "border border-tone-red/30 text-tone-red",
   };
   return (
     <span
