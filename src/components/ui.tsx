@@ -17,11 +17,11 @@ export function Card({
 }
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors active:scale-[0.98] transition-transform duration-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
+  "focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] px-5 py-2.5 text-sm font-medium transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
 
 const variants = {
   dark: "bg-ink-band text-white hover:bg-ink-band/88",
-  outline: "border border-hairline-strong bg-white text-foreground hover:bg-surface",
+  outline: "border border-hairline-strong bg-white text-foreground hover:border-foreground/25 hover:bg-surface",
   accent: "bg-accent text-accent-ink hover:bg-accent-dark",
   ghost: "text-foreground-soft hover:text-foreground",
 };
@@ -68,7 +68,7 @@ export function Badge({
   return (
     <span
       className={clsx(
-        "tracking-label inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-medium",
+        "tracking-label inline-flex items-center rounded-md px-2.5 py-1 text-[10px] font-semibold",
         tones[tone]
       )}
     >
@@ -80,8 +80,8 @@ export function Badge({
 export function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <Card className="p-4 sm:p-5">
-      <div className="tracking-label text-xs text-foreground-soft">{label}</div>
-      <div className="font-display mt-1.5 text-2xl text-foreground">{value}</div>
+      <div className="tracking-label text-[10px] font-semibold text-foreground-soft">{label}</div>
+      <div className="mt-2 font-mono text-2xl font-medium tracking-[-0.04em] text-foreground">{value}</div>
       {hint && <div className="mt-1 text-xs text-foreground-soft">{hint}</div>}
     </Card>
   );

@@ -1,0 +1,38 @@
+{
+  "project": "MODO",
+  "product": "Desktop-first B2B fashion retail merchandise planning workspace",
+  "stack": {
+    "framework": "Next.js 16",
+    "ui": "React 19",
+    "styling": "Tailwind CSS 4",
+    "motion": "Motion"
+  },
+  "audience": [
+    "fashion retail buyers",
+    "merchandise planners",
+    "retail operators"
+  ],
+  "tokens": {
+    "background": "#F5F5F1",
+    "foreground": "#191B1A",
+    "surface": "#FFFFFF",
+    "muted": "#ECEEEA",
+    "border": "#D7DBD5",
+    "accent": "#466A7C",
+    "accentSoft": "#DCE7EC"
+  },
+  "constraints": [
+    "Preserve existing routes and business logic",
+    "Keep the workspace desktop-first with a useful mobile fallback",
+    "Use editorial photography only where it adds fashion context",
+    "Meet WCAG AA contrast and keyboard interaction expectations",
+    "Avoid generic gradients, excessive cards, and decorative motion"
+  ],
+  "decisions": [
+    "Use the Fashion Intelligence Workspace direction",
+    "Use a graphite, porcelain, and mineral-blue palette",
+    "Use a desktop sidebar and compact mobile header",
+    "Use the generated showroom image on the Overview",
+    "Prioritize operational hierarchy over marketing-page composition"
+  ]
+}
