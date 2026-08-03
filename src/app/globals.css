@@ -39,8 +39,9 @@
   --color-tone-red: var(--tone-red);
   --color-ink-band: var(--ink-band);
   --radius-panel: var(--radius-panel);
-  --font-sans: var(--font-dm-sans);
-  --font-serif: var(--font-bodoni);
+  --font-sans: var(--font-manrope);
+  --font-serif: var(--font-manrope);
+  --font-mono: var(--font-manrope);
 }
 
 body {
@@ -51,10 +52,15 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-serif), Georgia, serif;
-  font-weight: 500;
-  letter-spacing: -0.045em;
-  line-height: 0.98;
+  font-family: var(--font-sans), Helvetica, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.04;
+}
+
+.font-mono {
+  font-family: var(--font-sans), Helvetica, sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 .tracking-label {
@@ -92,11 +98,11 @@ button {
 }
 
 .page-heading {
-  font-family: var(--font-serif), Georgia, serif;
-  font-size: clamp(2.5rem, 5vw, 4.75rem);
-  font-weight: 500;
-  letter-spacing: -0.055em;
-  line-height: 0.96;
+  font-family: var(--font-sans), Helvetica, sans-serif;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.04;
 }
 
 .page-deck {

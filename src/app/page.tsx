@@ -43,73 +43,65 @@ export default async function Home() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background px-5 py-7 sm:px-8 sm:py-10 xl:px-10">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-screen-2xl">
-        <header className="mb-8">
-          <p className="text-xs font-medium text-foreground-soft">Buying workspace</p>
-          <div className="mt-2 max-w-3xl">
-            <h1 className="font-display text-4xl text-foreground sm:text-5xl xl:text-6xl">
+        <header className="relative flex min-h-[390px] items-center overflow-hidden bg-ink-band text-white sm:min-h-[420px]">
+          <Image
+            src={heroImage}
+            alt="Fashion buyers reviewing garments and a seasonal color plan in a showroom"
+            fill
+            priority
+            placeholder="blur"
+            sizes="(min-width: 768px) calc(100vw - 248px), 100vw"
+            className="object-cover object-[62%_center]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-band/90 via-ink-band/48 to-transparent" />
+          <div className="relative max-w-[640px] px-5 py-12 sm:px-8 lg:px-10 xl:px-12">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/58">Buying workspace</p>
+            <h1 className="font-display mt-5 text-4xl text-white sm:text-[42px] xl:text-[46px]">
               Your quarter at a glance
             </h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-foreground-soft">
-            Continue the latest plan, review low-confidence recommendations, or start the next buying cycle.
-          </p>
+            <p className="mt-5 max-w-lg text-sm leading-7 text-white/72 sm:text-[15px]">
+              Continue the latest plan, review low-confidence recommendations, or start the next buying cycle.
+            </p>
           </div>
         </header>
 
-        <section className="grid min-h-[420px] overflow-hidden border-y border-ink-band bg-ink-band text-white lg:grid-cols-[0.62fr_1.38fr]">
-          <div className="flex flex-col justify-between gap-12 px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/48">
-                {activePlan ? `${activePlan.quarter} active plan` : "Ready for the next quarter"}
-              </p>
-              <h2 className="font-display mt-5 max-w-xl text-4xl leading-[0.98] sm:text-5xl xl:text-6xl">
-                {activePlan ? activePlan.name : "Turn retail history into a confident buy plan."}
-              </h2>
-              <p className="mt-4 max-w-lg text-sm leading-6 text-white/62 sm:text-base">
-                {activePlan
-                  ? `${activePlan.items.length} SKUs are ready for review. Focus on the decisions that need your judgment.`
-                  : "Upload the next catalog and build recommendations from your own sell-through history."}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <LinkButton
-                href={activePlan ? `/buy-plans/${activePlan.id}` : "/buy-plans/new"}
-                variant="accent"
-                className="px-6"
-              >
-                {activePlan ? "Continue plan" : "Create first plan"}
-                <span aria-hidden="true">→</span>
-              </LinkButton>
-              {activePlan && (
-                <LinkButton href="/buy-plans/new" className="border-white/20 bg-white/6 text-white hover:bg-white/12">
-                  New plan
-                </LinkButton>
-              )}
-            </div>
+        <section className="grid items-center gap-5 border-b border-hairline bg-white px-5 py-6 sm:px-8 lg:grid-cols-[0.85fr_1.2fr_auto] lg:gap-9 xl:px-10">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.11em] text-foreground-soft">
+              {activePlan ? `${activePlan.quarter} active plan` : "Ready for the next quarter"}
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.045em] text-foreground">
+              {activePlan ? activePlan.name : "Build the next quarter"}
+            </h2>
           </div>
-          <div className="relative min-h-[380px] lg:min-h-full">
-            <Image
-              src={heroImage}
-              alt="Fashion buyers reviewing garments and a seasonal color plan in a showroom"
-              fill
-              priority
-              placeholder="blur"
-              sizes="(min-width: 1024px) 68vw, 100vw"
-              className="object-cover object-[58%_center]"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-band/45 via-transparent to-transparent lg:from-ink-band/35" />
+          <p className="max-w-xl text-sm leading-6 text-foreground-soft">
+            {activePlan
+              ? `${activePlan.items.length} SKUs are ready for review. Focus on the decisions that need your judgment.`
+              : "Upload the next catalog and build recommendations from your own sell-through history."}
+          </p>
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            <LinkButton
+              href={activePlan ? `/buy-plans/${activePlan.id}` : "/buy-plans/new"}
+              variant="accent"
+              className="px-6"
+            >
+              {activePlan ? "Continue plan" : "Create first plan"}
+              <span aria-hidden="true">→</span>
+            </LinkButton>
+            {activePlan && <LinkButton href="/buy-plans/new">New plan</LinkButton>}
           </div>
         </section>
 
-        <section aria-label="Workspace metrics" className="mt-6 grid grid-cols-2 overflow-hidden border-y border-hairline bg-white lg:grid-cols-4">
+        <section aria-label="Workspace metrics" className="grid grid-cols-2 overflow-hidden border-b border-hairline bg-white lg:grid-cols-4">
           <Metric label="Historic orders" value={orderCount.toLocaleString()} />
           <Metric label="Quarters tracked" value={quarterRows.length.toLocaleString()} />
           <Metric label="Average sell-through" value={`${(avgSellThrough._avg.sellThroughPct ?? 0).toFixed(1)}%`} />
           <Metric label="Buy plans created" value={planCount.toLocaleString()} />
         </section>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="mx-5 mt-7 grid gap-5 pb-10 sm:mx-8 xl:mx-10 xl:grid-cols-[1.15fr_0.85fr]">
           <section className="rounded-panel border border-hairline bg-white">
             <div className="flex items-center justify-between border-b border-hairline px-5 py-4 sm:px-6">
               <div>
@@ -193,7 +185,7 @@ export default async function Home() {
         </div>
 
         {recentPlans.length > 1 && (
-          <section className="mt-5 rounded-panel border border-hairline bg-white">
+          <section className="mx-5 mt-5 rounded-panel border border-hairline bg-white sm:mx-8 xl:mx-10">
             <div className="border-b border-hairline px-5 py-4 sm:px-6">
               <h2 className="text-base font-semibold tracking-[-0.02em] text-foreground">Recent plans</h2>
             </div>
