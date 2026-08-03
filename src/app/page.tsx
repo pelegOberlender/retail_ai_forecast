@@ -53,7 +53,8 @@ export default async function Home() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url(/hero.jpg)" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-black/10" />
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-black/20" />
         <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 py-24 text-center">
           <h1 className="font-display text-5xl leading-tight text-white sm:text-6xl">
             A buy plan built on your retail data
