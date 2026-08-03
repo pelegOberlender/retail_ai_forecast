@@ -79,7 +79,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
 
   return (
     <div className="flex flex-col gap-6">
-      <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <Card className="flex flex-col gap-3 border-x-0 bg-transparent p-4 sm:flex-row sm:flex-wrap sm:items-end">
         <Select label="Quarter" value={season} onChange={setSeason} options={options.seasons} />
         <Select label="Category" value={category} onChange={setCategory} options={options.categories} />
         <Select label="Brand" value={brand} onChange={setBrand} options={options.brands} />
@@ -89,7 +89,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Style, SKU, or color…"
-            className="w-full rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
+            className="field-control text-sm"
           />
         </div>
         {hasFilters && (
@@ -99,7 +99,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
         )}
         <a
           href={`/api/historic-orders?${queryString ? `${queryString}&` : ""}format=xlsx`}
-          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/88 sm:self-end"
+          className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[4px] bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-colors hover:bg-foreground/88 sm:self-end"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
@@ -115,7 +115,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
       </Card>
 
       {summary && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 border-y border-hairline sm:grid-cols-4">
           <StatTile label="Orders" value={summary.count.toLocaleString()} />
           <StatTile label="Units Sold" value={summary.totalUnitsSold.toLocaleString()} />
           <StatTile label="Revenue" value={currency.format(summary.totalRevenue)} />
@@ -123,7 +123,7 @@ export default function HistoricOrdersClient({ options }: { options: Options }) 
         </div>
       )}
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-x-0">
         <div className="max-h-[640px] overflow-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="tracking-label sticky top-0 bg-surface-hover text-xs text-foreground-soft">
@@ -227,7 +227,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="cursor-pointer rounded-full border border-hairline bg-surface-hover px-4 py-2 text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25"
+        className="field-control min-w-36 cursor-pointer text-sm"
       >
         <option value="">All</option>
         {options.map((o) => (

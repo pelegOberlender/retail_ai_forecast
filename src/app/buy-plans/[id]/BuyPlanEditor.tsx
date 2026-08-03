@@ -109,12 +109,12 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
             <Badge tone={locked ? "green" : "neutral"}>{locked ? "Locked" : "Draft"}</Badge>
             {plan.brandFocus && <Badge>Trend focus: {plan.brandFocus}</Badge>}
           </div>
-          <h1 className="font-display text-2xl text-foreground sm:text-3xl">{plan.name}</h1>
+          <h1 className="font-display text-4xl text-foreground sm:text-5xl">{plan.name}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <a
             href={`/api/buy-plans/${plan.id}/export`}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-medium tracking-wide text-background hover:bg-foreground/90"
+            className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-[4px] bg-foreground px-5 py-2.5 text-sm font-medium text-background hover:bg-foreground/90"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
@@ -138,7 +138,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-6 border-y border-hairline sm:grid-cols-4">
         <StatTile label="SKUs" value={String(items.length)} />
         <StatTile label="Total Units" value={totals.totalUnits.toLocaleString()} />
         <StatTile label="Total Cost" value={currency.format(totals.totalCost)} />
@@ -160,7 +160,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
         </Card>
       )}
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-x-0">
         <div className="max-h-[720px] overflow-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
             <thead className="tracking-label sticky top-0 bg-surface-hover text-xs text-foreground-soft">
@@ -218,7 +218,7 @@ export default function BuyPlanEditor({ initialPlan }: { initialPlan: BuyPlan })
                         value={item.finalQty}
                         disabled={locked}
                         onChange={(e) => updateQty(item.id, parseInt(e.target.value || "0", 10))}
-                        className="w-20 rounded-lg border border-hairline bg-surface-hover px-2 py-1 text-right text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:text-foreground-soft"
+                        className="w-20 rounded-[4px] border border-hairline bg-white px-2 py-1.5 text-right text-sm text-foreground outline-none transition-shadow focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:bg-surface disabled:text-foreground-soft"
                       />
                       {!locked && item.finalQty !== item.recommendedQty && (
                         <button

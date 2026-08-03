@@ -43,27 +43,27 @@ export default async function Home() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background px-5 py-6 sm:px-8 sm:py-8 xl:px-10">
+    <div className="min-h-screen bg-background px-5 py-7 sm:px-8 sm:py-10 xl:px-10">
       <div className="mx-auto max-w-screen-2xl">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-medium text-foreground-soft">Buying workspace</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">
+        <header className="mb-8">
+          <p className="text-xs font-medium text-foreground-soft">Buying workspace</p>
+          <div className="mt-2 max-w-3xl">
+            <h1 className="font-display text-4xl text-foreground sm:text-5xl xl:text-6xl">
               Your quarter at a glance
             </h1>
-          </div>
-          <p className="max-w-md text-sm leading-6 text-foreground-soft">
+          <p className="mt-3 max-w-xl text-sm leading-6 text-foreground-soft">
             Continue the latest plan, review low-confidence recommendations, or start the next buying cycle.
           </p>
+          </div>
         </header>
 
-        <section className="grid min-h-[330px] overflow-hidden rounded-[16px] bg-ink-band text-white lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="flex flex-col justify-between gap-10 px-6 py-7 sm:px-8 sm:py-9 lg:px-10">
+        <section className="grid min-h-[420px] overflow-hidden border-y border-ink-band bg-ink-band text-white lg:grid-cols-[0.62fr_1.38fr]">
+          <div className="flex flex-col justify-between gap-12 px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/48">
                 {activePlan ? `${activePlan.quarter} active plan` : "Ready for the next quarter"}
               </p>
-              <h2 className="mt-4 max-w-xl text-3xl font-semibold leading-[1.08] tracking-[-0.05em] sm:text-4xl xl:text-5xl">
+              <h2 className="font-display mt-5 max-w-xl text-4xl leading-[0.98] sm:text-5xl xl:text-6xl">
                 {activePlan ? activePlan.name : "Turn retail history into a confident buy plan."}
               </h2>
               <p className="mt-4 max-w-lg text-sm leading-6 text-white/62 sm:text-base">
@@ -88,21 +88,21 @@ export default async function Home() {
               )}
             </div>
           </div>
-          <div className="relative min-h-[300px] lg:min-h-full">
+          <div className="relative min-h-[380px] lg:min-h-full">
             <Image
               src={heroImage}
               alt="Fashion buyers reviewing garments and a seasonal color plan in a showroom"
               fill
               priority
               placeholder="blur"
-              sizes="(min-width: 1024px) 55vw, 100vw"
-              className="object-cover object-center"
+              sizes="(min-width: 1024px) 68vw, 100vw"
+              className="object-cover object-[58%_center]"
             />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink-band/45 via-transparent to-transparent lg:from-ink-band/35" />
           </div>
         </section>
 
-        <section aria-label="Workspace metrics" className="mt-5 grid grid-cols-2 overflow-hidden rounded-panel border border-hairline bg-white lg:grid-cols-4">
+        <section aria-label="Workspace metrics" className="mt-6 grid grid-cols-2 overflow-hidden border-y border-hairline bg-white lg:grid-cols-4">
           <Metric label="Historic orders" value={orderCount.toLocaleString()} />
           <Metric label="Quarters tracked" value={quarterRows.length.toLocaleString()} />
           <Metric label="Average sell-through" value={`${(avgSellThrough._avg.sellThroughPct ?? 0).toFixed(1)}%`} />

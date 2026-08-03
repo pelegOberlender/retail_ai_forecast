@@ -15,11 +15,11 @@ export default async function BuyPlansPage() {
   const totalCost = plans.reduce((s, p) => s + p.items.reduce((si, i) => si + i.finalQty * i.unitCost, 0), 0);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8 sm:px-10 sm:py-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="page-frame">
+      <div className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-hairline pb-8">
         <div>
-          <h1 className="font-display text-3xl text-foreground sm:text-4xl">Buy Plans</h1>
-          <p className="mt-2 max-w-xl text-foreground-soft">
+          <h1 className="page-heading text-foreground">Buy plans</h1>
+          <p className="page-deck">
             Every buy plan you&apos;ve generated, by quarter, draft or locked and ready to send.
           </p>
         </div>
@@ -29,7 +29,7 @@ export default async function BuyPlansPage() {
       </div>
 
       {plans.length > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-8 grid grid-cols-2 gap-x-6 border-y border-hairline sm:grid-cols-4">
           <StatTile label="Total Plans" value={String(plans.length)} />
           <StatTile label="Locked" value={String(lockedCount)} hint={`${plans.length - lockedCount} draft`} />
           <StatTile label="Total Units" value={totalUnits.toLocaleString()} />
@@ -61,19 +61,19 @@ export default async function BuyPlansPage() {
           />
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-8 gap-y-6 lg:grid-cols-2">
           {plans.map((plan) => {
             const totalUnits = plan.items.reduce((s, i) => s + i.finalQty, 0);
             const totalCost = plan.items.reduce((s, i) => s + i.finalQty * i.unitCost, 0);
             const locked = plan.status === "locked";
             return (
               <Link key={plan.id} href={`/buy-plans/${plan.id}`}>
-                <Card className="flex h-full flex-col gap-3 p-5 transition-colors hover:bg-surface-hover">
+                <Card className="group flex h-full flex-col gap-4 border-x-0 border-b-0 bg-transparent p-5 transition-colors hover:bg-white">
                   <div className="flex items-center justify-between">
                     <Badge tone="accent">{plan.quarter}</Badge>
                     <Badge tone={locked ? "green" : "neutral"}>{locked ? "Locked" : "Draft"}</Badge>
                   </div>
-                  <h3 className="font-display text-base text-foreground">{plan.name}</h3>
+                  <h3 className="font-display text-2xl text-foreground transition-colors group-hover:text-accent-dark">{plan.name}</h3>
                   {plan.brandFocus && <p className="text-xs text-foreground-soft">Trend focus: {plan.brandFocus}</p>}
                   <div className="mt-auto grid grid-cols-2 gap-3 border-t border-hairline pt-3 text-sm">
                     <div>

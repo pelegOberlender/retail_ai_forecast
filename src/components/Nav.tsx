@@ -35,7 +35,7 @@ export default function Nav({ userEmail = null }: { userEmail?: string | null })
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col bg-ink-band text-white md:flex">
         <div className="flex h-20 items-center border-b border-white/10 px-6">
           <Link href="/" className="inline-flex items-center gap-3 focus-ring-dark">
-            <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-white text-ink-band">
+            <span className="grid h-9 w-9 place-items-center rounded-[4px] bg-white text-ink-band">
               <Logo className="h-5 w-5" />
             </span>
             <span>
@@ -56,14 +56,14 @@ export default function Nav({ userEmail = null }: { userEmail?: string | null })
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={clsx(
-                  "group flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-sm transition-colors focus-ring-dark",
+                  "group flex min-h-11 items-center gap-3 rounded-[4px] px-3 text-sm transition-colors focus-ring-dark",
                   active ? "bg-white text-ink-band" : "text-white/62 hover:bg-white/8 hover:text-white"
                 )}
               >
                 <span
                   aria-hidden="true"
                   className={clsx(
-                    "grid h-6 w-7 place-items-center rounded-md font-mono text-[9px] font-semibold tracking-[0.08em]",
+                    "grid h-6 w-7 place-items-center rounded-[3px] font-mono text-[9px] font-semibold tracking-[0.08em]",
                     active ? "bg-accent-soft text-accent-dark" : "bg-white/8 text-white/48 group-hover:text-white/70"
                   )}
                 >
@@ -77,7 +77,7 @@ export default function Nav({ userEmail = null }: { userEmail?: string | null })
           <div className="mt-5 border-t border-white/10 pt-5">
             <Link
               href="/buy-plans/new"
-              className="flex min-h-11 items-center justify-between rounded-[10px] bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-dark focus-ring-dark"
+              className="flex min-h-11 items-center justify-between rounded-[4px] bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-dark focus-ring-dark"
             >
               New buy plan
               <span aria-hidden="true" className="text-lg leading-none">+</span>
@@ -99,7 +99,7 @@ export default function Nav({ userEmail = null }: { userEmail?: string | null })
         <div className="flex items-center gap-2">
           <Link
             href="/buy-plans/new"
-            className="inline-flex h-11 items-center rounded-[10px] bg-accent px-4 text-sm font-medium text-white focus-ring"
+            className="inline-flex h-11 items-center rounded-[4px] bg-accent px-4 text-sm font-medium text-white focus-ring"
           >
             New plan
           </Link>
@@ -108,7 +108,7 @@ export default function Nav({ userEmail = null }: { userEmail?: string | null })
             onClick={() => setOpen((value) => !value)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
-            className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-[10px] border border-hairline bg-white focus-ring"
+            className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-[4px] border border-hairline bg-white focus-ring"
           >
             <span className={clsx("block h-px w-5 bg-foreground transition-transform", open && "translate-y-[3.5px] rotate-45")} />
             <span className={clsx("block h-px w-5 bg-foreground transition-transform", open && "-translate-y-[3.5px] -rotate-45")} />
