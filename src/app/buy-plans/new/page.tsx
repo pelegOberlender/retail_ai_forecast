@@ -1,229 +1,29 @@
-"use client";
+import { getCatalogImportView } from "@/lib/catalogImports";
+import { NewBuyPlanWorkflow } from "./NewBuyPlanWorkflow";
 
-import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, Button } from "@/components/ui";
-
-function upcomingQuarters(count: number): string[] {
-  const now = new Date();
-  let year = now.getFullYear();
-  let quarter = Math.floor(now.getMonth() / 3) + 1;
-  const out: string[] = [];
-  for (let i = 0; i < count; i++) {
-    quarter += 1;
-    if (quarter > 4) {
-      quarter = 1;
-      year += 1;
-    }
-    out.push(`${year}-Q${quarter}`);
-  }
-  return out;
-}
-
-export default function NewBuyPlanPage() {
-  const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const quarters = useMemo(() => upcomingQuarters(4), []);
-
-  const [file, setFile] = useState<File | null>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [name, setName] = useState("");
-  const [quarter, setQuarter] = useState(quarters[0]);
-  const [brandFocus, setBrandFocus] = useState("");
-  const [totalBudget, setTotalBudget] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  function handleFiles(files: FileList | null) {
-    if (files && files[0]) {
-      setFile(files[0]);
-      setError(null);
-    }
-  }
-
-  async function handleSubmit() {
-    if (!file) {
-      setError("Upload a catalog file (CSV or Excel) first.");
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-
-    const formData = new FormData();
-    formData.append("catalog", file);
-    formData.append("name", name || `${quarter} Buy Plan`);
-    formData.append("quarter", quarter);
-    if (brandFocus) formData.append("brandFocus", brandFocus);
-    if (totalBudget) formData.append("totalBudget", totalBudget);
-
-    try {
-      const res = await fetch("/api/buy-plans", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong generating the plan.");
-        setSubmitting(false);
-        return;
-      }
-      router.push(`/buy-plans/${data.plan.id}`);
-    } catch {
-      setError("Could not reach the server. Try again.");
-      setSubmitting(false);
-    }
-  }
+export default async function NewBuyPlanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ catalogImportId?: string }>;
+}) {
+  const { catalogImportId } = await searchParams;
+  const initialCatalogImport = catalogImportId
+    ? await getCatalogImportView(catalogImportId)
+    : null;
 
   return (
-    <div className="page-frame max-w-6xl">
-      <div className="mb-8 border-b border-hairline pb-8">
-        <h1 className="page-heading text-foreground">Create a buy plan</h1>
+    <div className="page-frame max-w-screen-2xl">
+      <header className="border-b border-hairline pb-7">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-dark">
+          Quarterly planning workflow
+        </p>
+        <h1 className="page-heading mt-3">Create a buy plan</h1>
         <p className="page-deck">
-          Upload next quarter&apos;s catalog and we&apos;ll recommend order quantities based on
-          historic sell-through and trend signal.
+          Validate the supplier catalog first, confirm the commercial brief, then generate a review-ready plan.
         </p>
-      </div>
+      </header>
 
-      <div className="mb-6 flex items-center gap-2 text-xs text-foreground-soft">
-        <StepDot active label="Upload catalog" />
-        <StepLine />
-        <StepDot active={Boolean(file)} label="Plan details" />
-        <StepLine />
-        <StepDot active={submitting} label="Generate" />
-      </div>
-
-      <Card className="border-x-0 p-6 sm:p-8 lg:p-10">
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragActive(false);
-            handleFiles(e.dataTransfer.files);
-          }}
-          onClick={() => fileInputRef.current?.click()}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[4px] border border-dashed px-6 py-14 text-center transition-colors ${
-            dragActive ? "border-accent bg-accent/10" : "border-hairline hover:border-accent/60"
-          }`}
-        >
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" className="text-foreground-soft" aria-hidden>
-            <path
-              d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 3v12m0-12l-4 4m4-4l4 4"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {file ? (
-            <p className="font-medium text-foreground">{file.name}</p>
-          ) : (
-            <>
-              <p className="font-medium text-foreground">Click to upload a catalog or drag &amp; drop</p>
-              <p className="text-xs text-foreground-soft">Supports CSV, XLSX. Item name is the only required column.</p>
-            </>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls"
-            className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-        </div>
-
-        <p className="mt-3 text-center text-xs text-foreground-soft">
-          No catalog handy?{" "}
-          <a href="/sample-catalog.csv" download className="text-accent-dark underline hover:text-foreground">
-            Download a sample catalog
-          </a>{" "}
-          to try it out.
-        </p>
-
-        <div className="mt-8 grid gap-5 sm:grid-cols-2">
-          <Field label="Plan name (optional)">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={`${quarter} Buy Plan`}
-              className="field-control text-sm"
-            />
-          </Field>
-          <Field label="Target quarter">
-            <select
-              value={quarter}
-              onChange={(e) => setQuarter(e.target.value)}
-              className="field-control cursor-pointer text-sm"
-            >
-              {quarters.map((q) => (
-                <option key={q} value={q}>
-                  {q}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Brand focus for trend read (optional)">
-            <input
-              value={brandFocus}
-              onChange={(e) => setBrandFocus(e.target.value)}
-              placeholder="e.g. Modo Label"
-              className="field-control text-sm"
-            />
-          </Field>
-          <Field label="Total budget (optional)">
-            <input
-              value={totalBudget}
-              onChange={(e) => setTotalBudget(e.target.value.replace(/[^0-9.]/g, ""))}
-              placeholder="e.g. 50000"
-              inputMode="decimal"
-              className="field-control text-sm"
-            />
-          </Field>
-        </div>
-
-        {error && (
-          <p className="mt-4 flex items-center gap-2 text-sm text-tone-red">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden className="flex-shrink-0">
-              <path
-                d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 003.82 21h16.36a2 2 0 001.71-2.96L13.71 3.86a2 2 0 00-3.42 0z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {error}
-          </p>
-        )}
-
-        <div className="mt-8 flex justify-start">
-          <Button variant="dark" className="cursor-pointer px-8 py-3 text-[15px]" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? "Generating buy plan…" : "Generate Buy Plan"}
-          </Button>
-        </div>
-      </Card>
+      <NewBuyPlanWorkflow initialCatalogImport={initialCatalogImport} />
     </div>
   );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="tracking-label mb-1.5 block text-xs text-foreground-soft">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function StepDot({ active, label }: { active: boolean; label: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-accent" : "bg-hairline-strong"}`} />
-      <span className={active ? "text-foreground" : ""}>{label}</span>
-    </div>
-  );
-}
-
-function StepLine() {
-  return <span className="h-px w-6 bg-hairline-strong" />;
 }

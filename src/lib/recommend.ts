@@ -18,6 +18,7 @@ import { embedTexts, cosineSimilarity } from "@/lib/ai/embeddings";
  */
 
 export type CatalogItemInput = {
+  productId?: string;
   sku?: string;
   styleName: string;
   category: string;
@@ -29,6 +30,7 @@ export type CatalogItemInput = {
 };
 
 export type RecommendationResult = {
+  productId: string | null;
   sku: string | null;
   styleName: string;
   category: string;
@@ -51,6 +53,11 @@ export type GenerateOptions = {
   brandFocus?: string;
   targetMarket?: string;
   totalBudget?: number;
+  onProgress?: (progress: {
+    processedCategories: number;
+    totalCategories: number;
+    currentCategory: string;
+  }) => void | Promise<void>;
 };
 
 const STOPWORDS = new Set(["the", "a", "an", "with", "and", "of"]);
@@ -131,7 +138,8 @@ export async function generateBuyPlanRecommendations(
 
   const results: RecommendationResult[] = [];
 
-  for (const category of categories) {
+  for (let categoryIndex = 0; categoryIndex < categories.length; categoryIndex += 1) {
+    const category = categories[categoryIndex];
     const categoryItems = items.filter((i) => i.category === category);
     const candidates = historicByCategory.get(category) ?? [];
     const liveTrend = trendByCategory.get(category) ?? null;
@@ -177,6 +185,7 @@ export async function generateBuyPlanRecommendations(
       const rationale = `${historicSentence} ${trendSentence}`;
 
       results.push({
+        productId: item.productId ?? null,
         sku: item.sku ?? null,
         styleName: item.styleName,
         category: item.category,
@@ -194,6 +203,12 @@ export async function generateBuyPlanRecommendations(
         imageUrl: item.imageUrl ?? null,
       });
     }
+
+    await options.onProgress?.({
+      processedCategories: categoryIndex + 1,
+      totalCategories: categories.length,
+      currentCategory: category,
+    });
   }
 
   if (options.totalBudget && options.totalBudget > 0) {

@@ -17,9 +17,10 @@ Three tools, one quarterly workflow:
 
 ## Stack
 
-- Next.js 15 (App Router) + TypeScript + Tailwind v4
-- Prisma + SQLite (`prisma/schema.prisma`, `prisma/dev.db`)
-- SheetJS (`xlsx`) for Excel import/export
+- Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4
+- Prisma + Supabase PostgreSQL
+- Supabase Auth and private Storage for embedded catalog images
+- SheetJS and ExcelJS for CSV/Excel import, validation, and export
 
 ## First-time setup
 
@@ -45,12 +46,11 @@ npm install            # re-run once scripts are approved
 If you're not sure whether it ran, `npx prisma generate` is safe to run again
 manually — it's idempotent.
 
-Next, set up the local database:
+Next, create `.env.local` from `.env.example` and add the Supabase values locally. Never commit or paste secrets into chat. Apply the checked-in PostgreSQL migration:
 
 ```bash
-cp .env.example .env      # DATABASE_URL for the local SQLite file — not committed
-npx prisma db push        # creates prisma/dev.db from prisma/schema.prisma
-npm run db:seed           # populates ~800 mock historic order rows across 8 quarters
+cp .env.example .env.local
+npx prisma migrate deploy
 ```
 
 Then run the app:
@@ -66,12 +66,10 @@ Open [http://localhost:3000](http://localhost:3000).
 1. **Home** gives you the lay of the land and live counts from the seeded data.
 2. **Historic Orders** (`/historic-orders`) — filter by quarter/category/brand
    or search, then "Export to Excel" to download the filtered set.
-3. **New Buy Plan** (`/buy-plans/new`) — upload a catalog file. Don't have one
-   handy? Click "Download a sample catalog" on that page (or grab
-   `public/sample-catalog.csv` directly) to try the flow end-to-end. Fill in
-   the target quarter, optionally a brand to focus the trend read on, and an
-   optional total budget, then "Generate Buy Plan" — you'll land on the
-   editor for the plan it just created.
+3. **New Buy Plan** (`/buy-plans/new`) — upload a catalog file, validate and
+   map its columns, review warnings through server pagination, enter the plan
+   brief, and confirm the preflight summary before generation. Don't have a
+   catalog handy? Use `public/sample-catalog.csv`.
 
    Only an item-name column is strictly required — category is inferred by
    keyword when absent, and cost/price default to $0 (with a warning) rather
@@ -91,12 +89,10 @@ Open [http://localhost:3000](http://localhost:3000).
 5. **Buy Plans** (`/buy-plans`) — every plan you've generated, draft or
    locked, with quarter/unit/cost totals at a glance.
 
-## Resetting data
+## Data management
 
-- `npm run db:seed` clears and regenerates historic orders only (buy plans
-  are untouched).
-- To wipe everything and start clean: delete `prisma/dev.db`, then re-run
-  `npx prisma db push && npm run db:seed`.
+The active database is Supabase PostgreSQL. Use checked-in Prisma migrations
+for schema changes. Do not delete or reset production data from local scripts.
 
 ## Recommendation engine — live AI, with a deterministic fallback
 
@@ -108,14 +104,14 @@ API key so the app works fully without either:
   with the web search tool, researching real trend momentum for the
   brand/category/quarter. Called once per category per plan (not once per
   item), and its written rationale is used directly in each line's "why?"
-  panel. Falls back to a deterministic hash-based heuristic
-  (`brandBuzzScore` in `recommend.ts`) when `ANTHROPIC_API_KEY` is unset.
+  panel. When `ANTHROPIC_API_KEY` is unset, trend evidence is omitted rather
+  than replaced with an invented score.
 - **Catalog-to-history similarity** (`src/lib/ai/embeddings.ts`) — Voyage AI
   embeddings (`voyage-3-lite`) comparing each catalog item to historic SKUs
   in the same category, replacing plain token overlap. Falls back to
   token-overlap matching when `VOYAGE_API_KEY` is unset.
 
-Set either key in `.env` (see `.env.example`) and the corresponding signal
+Set either key in `.env.local` (see `.env.example`) and the corresponding signal
 activates automatically on the next "Generate Buy Plan" — no code changes
 needed. With no keys set, everything still works end to end on the
 deterministic fallbacks; you'll just see heuristic trend/rationale text
@@ -129,5 +125,6 @@ historic data is generated deterministically by `prisma/seed.ts` — rerun
 
 ## Scope notes
 
-Single-retailer, no auth (by design, for now). Multi-tenancy and login can be
-layered in later without a rebuild.
+Authentication is active through Supabase. The current product operates as a
+single-retailer workspace; organization-level multi-tenancy and roles remain a
+future milestone.
