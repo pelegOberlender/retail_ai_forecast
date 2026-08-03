@@ -43,6 +43,7 @@
     "Use a narrow 38–42% editorial image rail on desktop authentication screens with a restrained one-time reveal motion",
     "Render authentication photography at high quality with slight transparency over graphite so it blends into the interface",
     "Use the approved 9:16 MODO buyer portrait on authentication screens, cropped from the knees upward to prioritize identity and clothing context",
-    "Use a five-step catalog workflow with bounded server pagination, desktop tables, and mobile item cards"
+    "Use a five-step catalog workflow with bounded server pagination, desktop tables, and mobile item cards",
+    "Give catalog validation the full workspace width; show readable product descriptions and place mapping diagnostics below the product table"
   ]
 }

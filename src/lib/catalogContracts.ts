@@ -13,11 +13,17 @@ export type CatalogPreviewRow = {
   category: string | null;
   color: string | null;
   brand: string | null;
+  description: string | null;
   wholesalePrice: number | null;
   retailPrice: number | null;
   imageUrl: string | null;
   validationStatus: "pending" | "valid" | "warning" | "error";
   validationIssues: unknown;
+};
+
+export type CatalogPreviewPage = {
+  preview: CatalogPreviewRow[];
+  pagination: CatalogImportView["pagination"];
 };
 
 export type CatalogImportView = {

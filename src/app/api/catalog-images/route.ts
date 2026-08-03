@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     return new Response(image.body, {
       headers: {
         "Content-Type": image.contentType,
-        "Cache-Control": "private, max-age=3600, stale-while-revalidate=86400",
+        "Cache-Control": "private, max-age=31536000, immutable",
         "X-Content-Type-Options": "nosniff",
       },
     });

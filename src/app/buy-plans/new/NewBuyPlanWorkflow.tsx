@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -19,7 +19,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { Button } from "@/components/ui";
-import type { CatalogImportView, CatalogIssueView } from "@/lib/catalogContracts";
+import type { CatalogImportView, CatalogIssueView, CatalogPreviewPage } from "@/lib/catalogContracts";
 
 const STEPS = ["Upload", "Validate", "Plan details", "Review", "Generate"] as const;
 const FIELD_OPTIONS = [
@@ -72,6 +72,13 @@ export function NewBuyPlanWorkflow({
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const quarters = useMemo(() => upcomingQuarters(5), []);
+  const previewCacheRef = useRef<Map<number, CatalogPreviewPage>>(
+    new Map(initialCatalogImport ? [[initialCatalogImport.pagination.page, {
+      preview: initialCatalogImport.preview,
+      pagination: initialCatalogImport.pagination,
+    }]] : [])
+  );
+  const previewRequestsRef = useRef<Map<number, Promise<CatalogPreviewPage>>>(new Map());
 
   const [step, setStep] = useState(initialCatalogImport?.status === "ready" ? 1 : 0);
   const [file, setFile] = useState<File | null>(null);
@@ -89,6 +96,36 @@ export function NewBuyPlanWorkflow({
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const requestPreviewPage = useCallback(
+    (catalogImportId: string, page: number, pageSize: number): Promise<CatalogPreviewPage> => {
+      const cached = previewCacheRef.current.get(page);
+      if (cached) return Promise.resolve(cached);
+      const pending = previewRequestsRef.current.get(page);
+      if (pending) return pending;
+
+      const request = fetch(`/api/catalog-imports/${catalogImportId}?page=${page}&pageSize=${pageSize}`)
+        .then(async (response) => {
+          const data = (await response.json()) as { previewPage?: CatalogPreviewPage; error?: string };
+          if (!response.ok || !data.previewPage) throw new Error(data.error ?? "Could not load this preview page.");
+          previewCacheRef.current.set(page, data.previewPage);
+          return data.previewPage;
+        })
+        .finally(() => previewRequestsRef.current.delete(page));
+      previewRequestsRef.current.set(page, request);
+      return request;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!catalogImport) return;
+    const { page, pageSize, totalPages } = catalogImport.pagination;
+    const adjacentPages = [page + 1, page - 1].filter((candidate) => candidate >= 1 && candidate <= totalPages);
+    for (const adjacentPage of adjacentPages) {
+      void requestPreviewPage(catalogImport.id, adjacentPage, pageSize).catch(() => undefined);
+    }
+  }, [catalogImport, requestPreviewPage]);
+
   function selectFile(nextFile: File | null) {
     setFile(nextFile);
     setCatalogImport(null);
@@ -96,6 +133,8 @@ export function NewBuyPlanWorkflow({
     setMapping({});
     setMappingRequired(false);
     setError(null);
+    previewCacheRef.current.clear();
+    previewRequestsRef.current.clear();
   }
 
   function resetUpload() {
@@ -151,6 +190,10 @@ export function NewBuyPlanWorkflow({
       }
 
       setCatalogImport(data.catalogImport);
+      previewCacheRef.current.set(data.catalogImport.pagination.page, {
+        preview: data.catalogImport.preview,
+        pagination: data.catalogImport.pagination,
+      });
       setMapping(data.catalogImport.mapping);
       setMappingRequired(false);
       setStep(1);
@@ -164,20 +207,23 @@ export function NewBuyPlanWorkflow({
 
   async function loadPreviewPage(page: number) {
     if (!catalogImport || page < 1 || page > catalogImport.pagination.totalPages) return;
+    const activeCatalogId = catalogImport.id;
+    const cached = previewCacheRef.current.get(page);
+    if (cached) {
+      setCatalogImport((current) => current?.id === activeCatalogId ? { ...current, ...cached } : current);
+      return;
+    }
     setPreviewLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        `/api/catalog-imports/${catalogImport.id}?page=${page}&pageSize=${catalogImport.pagination.pageSize}`
+      const previewPage = await requestPreviewPage(
+        activeCatalogId,
+        page,
+        catalogImport.pagination.pageSize
       );
-      const data = (await response.json()) as { catalogImport?: CatalogImportView; error?: string };
-      if (!response.ok || !data.catalogImport) {
-        setError(data.error ?? "Could not load this preview page.");
-        return;
-      }
-      setCatalogImport(data.catalogImport);
-    } catch {
-      setError("Could not load this preview page.");
+      setCatalogImport((current) => current?.id === activeCatalogId ? { ...current, ...previewPage } : current);
+    } catch (previewError) {
+      setError(previewError instanceof Error ? previewError.message : "Could not load this preview page.");
     } finally {
       setPreviewLoading(false);
     }
@@ -525,9 +571,9 @@ function ValidationStep({
           <Metric label="Rows skipped" value={catalogImport.errorCount.toLocaleString()} tone={catalogImport.errorCount ? "red" : undefined} />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="space-y-6">
           <CatalogPreview catalogImport={catalogImport} loading={loading} onPage={onPage} />
-          <div className="space-y-5">
+          <div className="grid items-start gap-5 lg:grid-cols-2">
             <MappingSummary mapping={catalogImport.mapping} />
             <IssueSummary issues={catalogImport.issues} />
           </div>
@@ -557,7 +603,7 @@ function CatalogPreview({ catalogImport, loading, onPage }: { catalogImport: Cat
   const { page, totalPages, totalItems } = catalogImport.pagination;
   return (
     <section className="min-w-0 border border-hairline">
-      <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
+      <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
         <div>
           <h3 className="text-sm font-semibold">Product preview</h3>
           <p className="mt-0.5 text-xs text-foreground-soft">Page {page} of {totalPages} · {totalItems.toLocaleString()} products</p>
@@ -566,17 +612,27 @@ function CatalogPreview({ catalogImport, loading, onPage }: { catalogImport: Cat
       </div>
       <div className="divide-y divide-hairline md:hidden">
         {catalogImport.preview.map((product) => (
-          <article key={product.id} className="px-4 py-4">
+          <article key={product.id} className="px-5 py-5">
             <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{product.styleName}</p>
-                <p className="mt-1 text-[11px] text-foreground-soft">{product.sku || "No SKU"} · {product.category || "Uncategorized"}</p>
+              <div className="flex min-w-0 gap-3">
+                <span className="relative grid h-16 w-12 shrink-0 place-items-center overflow-hidden bg-surface text-[10px] text-foreground-soft">
+                  {product.imageUrl?.startsWith("/") ? (
+                    <Image src={product.imageUrl} alt="" fill sizes="48px" className="object-cover" unoptimized />
+                  ) : product.styleName.slice(0, 2).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-5 text-foreground">{product.styleName}</p>
+                  <p className="mt-1 text-[11px] text-foreground-soft">{product.sku || "No SKU"} · {product.category || "Uncategorized"}</p>
+                </div>
               </div>
               <span className={`inline-flex shrink-0 items-center gap-1 text-[11px] ${product.validationStatus === "warning" ? "text-tone-amber" : "text-tone-green"}`}>
                 {product.validationStatus === "warning" ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                 {product.validationStatus === "warning" ? "Review" : "Ready"}
               </span>
             </div>
+            <p className="mt-3 line-clamp-3 text-xs leading-5 text-foreground-soft" title={product.description || undefined}>
+              {product.description || "No product description provided."}
+            </p>
             <div className="mt-3 flex items-center justify-between border-t border-hairline pt-3 text-xs">
               <span className="text-foreground-soft">{product.color || product.brand || "No color"}</span>
               <span className="font-mono tabular-nums">{formatMoney(product.wholesalePrice)} / {formatMoney(product.retailPrice)}</span>
@@ -585,39 +641,45 @@ function CatalogPreview({ catalogImport, loading, onPage }: { catalogImport: Cat
         ))}
       </div>
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full border-collapse text-left text-xs">
-          <thead className="bg-surface/55 text-[9px] uppercase tracking-[0.1em] text-foreground-soft">
+        <table className="w-full table-fixed border-collapse text-left text-sm">
+          <thead className="bg-surface/55 text-[10px] uppercase tracking-[0.1em] text-foreground-soft">
             <tr>
-              <th className="px-4 py-3 font-semibold">Product</th>
-              <th className="px-4 py-3 font-semibold">SKU</th>
-              <th className="px-4 py-3 font-semibold">Category</th>
-              <th className="px-4 py-3 text-right font-semibold">Cost</th>
-              <th className="px-4 py-3 text-right font-semibold">Retail</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="w-[24%] px-5 py-3.5 font-semibold">Product</th>
+              <th className="w-[30%] px-5 py-3.5 font-semibold">Description</th>
+              <th className="w-[10%] px-4 py-3.5 font-semibold">SKU</th>
+              <th className="w-[11%] px-4 py-3.5 font-semibold">Category</th>
+              <th className="w-[8%] px-4 py-3.5 text-right font-semibold">Cost</th>
+              <th className="w-[8%] px-4 py-3.5 text-right font-semibold">Retail</th>
+              <th className="w-[9%] px-4 py-3.5 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody className={loading ? "opacity-45" : undefined}>
             {catalogImport.preview.map((product) => (
               <tr key={product.id} className="border-t border-hairline first:border-t-0">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="relative grid h-9 w-8 shrink-0 place-items-center overflow-hidden bg-surface text-[9px] text-foreground-soft">
+                <td className="px-5 py-4 align-top">
+                  <div className="flex items-start gap-3">
+                    <span className="relative grid h-16 w-12 shrink-0 place-items-center overflow-hidden bg-surface text-[9px] text-foreground-soft">
                       {product.imageUrl?.startsWith("/") ? (
-                        <Image src={product.imageUrl} alt="" fill sizes="32px" className="object-cover" unoptimized />
+                        <Image src={product.imageUrl} alt="" fill sizes="48px" className="object-cover" unoptimized />
                       ) : product.styleName.slice(0, 2).toUpperCase()}
                     </span>
-                    <span>
-                      <span className="block max-w-56 truncate font-medium text-foreground">{product.styleName}</span>
-                      <span className="mt-0.5 block text-[10px] text-foreground-soft">{product.color || product.brand || "—"}</span>
+                    <span className="min-w-0">
+                      <span className="block font-semibold leading-5 text-foreground">{product.styleName}</span>
+                      <span className="mt-1 block text-xs text-foreground-soft">{product.color || product.brand || "—"}</span>
                     </span>
                   </div>
                 </td>
-                <td className="px-4 py-3 font-mono text-foreground-soft">{product.sku || "—"}</td>
-                <td className="px-4 py-3">{product.category || "Uncategorized"}</td>
-                <td className="px-4 py-3 text-right tabular-nums">{formatMoney(product.wholesalePrice)}</td>
-                <td className="px-4 py-3 text-right tabular-nums">{formatMoney(product.retailPrice)}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1.5 ${product.validationStatus === "warning" ? "text-tone-amber" : "text-tone-green"}`}>
+                <td className="px-5 py-4 align-top">
+                  <p className="line-clamp-3 text-xs leading-5 text-foreground-soft" title={product.description || undefined}>
+                    {product.description || "No description provided."}
+                  </p>
+                </td>
+                <td className="px-4 py-4 align-top font-mono text-xs text-foreground-soft">{product.sku || "—"}</td>
+                <td className="px-4 py-4 align-top text-xs leading-5">{product.category || "Uncategorized"}</td>
+                <td className="px-4 py-4 text-right align-top text-xs tabular-nums">{formatMoney(product.wholesalePrice)}</td>
+                <td className="px-4 py-4 text-right align-top text-xs tabular-nums">{formatMoney(product.retailPrice)}</td>
+                <td className="px-4 py-4 align-top text-xs">
+                  <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${product.validationStatus === "warning" ? "text-tone-amber" : "text-tone-green"}`}>
                     {product.validationStatus === "warning" ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                     {product.validationStatus === "warning" ? "Review" : "Ready"}
                   </span>
@@ -627,7 +689,7 @@ function CatalogPreview({ catalogImport, loading, onPage }: { catalogImport: Cat
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between border-t border-hairline px-4 py-3">
+      <div className="flex items-center justify-between border-t border-hairline px-5 py-3.5">
         <Button variant="ghost" disabled={page <= 1 || loading} onClick={() => onPage(page - 1)} className="min-h-9 px-3 py-1.5 text-xs">
           <ArrowLeft aria-hidden="true" className="h-3.5 w-3.5" />Previous
         </Button>

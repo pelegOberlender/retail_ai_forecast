@@ -1,9 +1,28 @@
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { CatalogImportView, CatalogIssueView } from "@/lib/catalogContracts";
+import type { CatalogImportView, CatalogIssueView, CatalogPreviewPage } from "@/lib/catalogContracts";
 
 const DEFAULT_PAGE_SIZE = 12;
 const MAX_PAGE_SIZE = 50;
+const catalogProductPreviewSelect = {
+  id: true,
+  originalRow: true,
+  sku: true,
+  styleName: true,
+  category: true,
+  color: true,
+  brand: true,
+  description: true,
+  wholesalePrice: true,
+  retailPrice: true,
+  imageRef: true,
+  sourceUrl: true,
+  validationStatus: true,
+  validationIssues: true,
+} satisfies Prisma.CatalogProductSelect;
+
+type PreviewProduct = Prisma.CatalogProductGetPayload<{ select: typeof catalogProductPreviewSelect }>;
 
 function recordValue(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -11,12 +30,57 @@ function recordValue(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function paginationOptions(options: { page?: number; pageSize?: number }) {
+  return {
+    page: Math.max(1, Math.floor(options.page ?? 1)),
+    pageSize: Math.min(MAX_PAGE_SIZE, Math.max(1, Math.floor(options.pageSize ?? DEFAULT_PAGE_SIZE))),
+  };
+}
+
+function previewRows(products: PreviewProduct[]) {
+  return products.map((product) => ({
+    ...product,
+    imageUrl: product.imageRef
+      ? `/api/catalog-images?path=${encodeURIComponent(product.imageRef)}`
+      : product.sourceUrl,
+  }));
+}
+
+export async function getCatalogPreviewPage(
+  id: string,
+  options: { page?: number; pageSize?: number } = {}
+): Promise<CatalogPreviewPage | null> {
+  const { page, pageSize } = paginationOptions(options);
+  const catalogImport = await prisma.catalogImport.findUnique({
+    where: { id },
+    select: {
+      validRowCount: true,
+      products: {
+        orderBy: { originalRow: "asc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: catalogProductPreviewSelect,
+      },
+    },
+  });
+  if (!catalogImport) return null;
+
+  return {
+    preview: previewRows(catalogImport.products),
+    pagination: {
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(catalogImport.validRowCount / pageSize)),
+      totalItems: catalogImport.validRowCount,
+    },
+  };
+}
+
 export async function getCatalogImportView(
   id: string,
   options: { page?: number; pageSize?: number } = {}
 ): Promise<CatalogImportView | null> {
-  const page = Math.max(1, Math.floor(options.page ?? 1));
-  const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Math.floor(options.pageSize ?? DEFAULT_PAGE_SIZE)));
+  const { page, pageSize } = paginationOptions(options);
   const catalogImport = await prisma.catalogImport.findUnique({
     where: { id },
     include: {
@@ -24,21 +88,7 @@ export async function getCatalogImportView(
         orderBy: { originalRow: "asc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
-        select: {
-          id: true,
-          originalRow: true,
-          sku: true,
-          styleName: true,
-          category: true,
-          color: true,
-          brand: true,
-          wholesalePrice: true,
-          retailPrice: true,
-          imageRef: true,
-          sourceUrl: true,
-          validationStatus: true,
-          validationIssues: true,
-        },
+        select: catalogProductPreviewSelect,
       },
     },
   });
@@ -74,12 +124,7 @@ export async function getCatalogImportView(
       name: group.category ?? "Uncategorized",
       count: group._count._all,
     })),
-    preview: catalogImport.products.map((product) => ({
-      ...product,
-      imageUrl: product.imageRef
-        ? `/api/catalog-images?path=${encodeURIComponent(product.imageRef)}`
-        : product.sourceUrl,
-    })),
+    preview: previewRows(catalogImport.products),
     pagination: {
       page,
       pageSize,

@@ -1,4 +1,4 @@
-import { getCatalogImportView } from "@/lib/catalogImports";
+import { getCatalogPreviewPage } from "@/lib/catalogImports";
 import { getUser } from "@/lib/supabase/server";
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,7 +9,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const url = new URL(request.url);
   const page = Number.parseInt(url.searchParams.get("page") ?? "1", 10);
   const pageSize = Number.parseInt(url.searchParams.get("pageSize") ?? "12", 10);
-  const catalogImport = await getCatalogImportView(id, { page, pageSize });
-  if (!catalogImport) return Response.json({ error: "Catalog import not found." }, { status: 404 });
-  return Response.json({ catalogImport });
+  const previewPage = await getCatalogPreviewPage(id, { page, pageSize });
+  if (!previewPage) return Response.json({ error: "Catalog import not found." }, { status: 404 });
+  return Response.json(
+    { previewPage },
+    { headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=300" } }
+  );
 }
