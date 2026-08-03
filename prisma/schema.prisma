@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -30,41 +30,289 @@ model HistoricOrder {
   @@index([brand])
 }
 
+enum CatalogImportStatus {
+  uploaded
+  validating
+  ready
+  failed
+}
+
+enum CatalogValidationStatus {
+  pending
+  valid
+  warning
+  error
+}
+
+enum AnalysisStatus {
+  pending
+  processing
+  complete
+  failed
+}
+
+enum JobStatus {
+  queued
+  running
+  succeeded
+  failed
+  cancelled
+}
+
+enum JobType {
+  catalog_parse
+  product_analysis
+  embedding
+  trend_research
+  recommendation_generation
+}
+
+model CatalogImport {
+  id             String              @id @default(cuid())
+  fileName       String
+  brand          String?
+  year           Int?
+  season         String?
+  targetMarket   String              @default("IL")
+  uploadedAt     DateTime            @default(now())
+  status         CatalogImportStatus @default(uploaded)
+  rowCount       Int                 @default(0)
+  validRowCount  Int                 @default(0)
+  warningCount   Int                 @default(0)
+  errorCount     Int                 @default(0)
+  sourceMetadata Json?
+  mapping        Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  products CatalogProduct[]
+  buyPlans BuyPlan[]
+  jobs     BackgroundJob[]
+
+  @@index([status])
+  @@index([targetMarket, season, year])
+}
+
+model CatalogProduct {
+  id               String                  @id @default(cuid())
+  catalogImportId  String
+  catalogImport    CatalogImport           @relation(fields: [catalogImportId], references: [id], onDelete: Cascade)
+  originalRow      Int
+  temporaryId      String
+  brand            String?
+  year             Int?
+  season           String?
+  gender           String?
+  category         String?
+  subcategory      String?
+  styleName        String
+  styleCode        String?
+  sku              String?
+  barcode          String?
+  color            String?
+  description      String?
+  imageRef         String?
+  sourceUrl        String?
+  wholesalePrice   Float?
+  retailPrice      Float?
+  margin           Float?
+  rawRow           Json
+  validationStatus CatalogValidationStatus @default(pending)
+  validationIssues Json?
+  contentHash      String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  analysis     ProductAnalysis?
+  buyPlanItems BuyPlanItem[]
+
+  @@unique([catalogImportId, originalRow])
+  @@unique([catalogImportId, temporaryId])
+  @@index([brand, season])
+  @@index([category, subcategory])
+  @@index([sku])
+  @@index([styleCode])
+  @@index([validationStatus])
+}
+
+model ProductAnalysis {
+  id                 String         @id @default(cuid())
+  productId          String         @unique
+  product            CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  status             AnalysisStatus @default(pending)
+  visualDescription  String?
+  detectedCategory   String?
+  garmentType        String?
+  silhouette         String?
+  fit                String?
+  sleeveLength       String?
+  neckline           String?
+  length             String?
+  materialCues       Json?
+  dominantColors     Json?
+  printType          String?
+  logoIntensity      String?
+  aestheticTags      Json?
+  occasionTags       Json?
+  seasonality        Json?
+  coreVsFashion      String?
+  commerciality      Float?
+  novelty            Float?
+  commercialRisk     Float?
+  confidenceByField  Json?
+  imageEmbedding     Json?
+  textEmbedding      Json?
+  modelVersion       String?
+  promptVersion      String?
+  analysisConfidence Float?
+  contentHash        String?
+  analyzedAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([status])
+  @@index([contentHash, modelVersion])
+}
+
+model TrendReport {
+  id               String         @id @default(cuid())
+  targetMarket     String         @default("IL")
+  targetQuarter    String
+  season           String?
+  gender           String?
+  brandFocus       String?
+  category         String?
+  brandPositioning String?
+  targetCustomer   String?
+  pricePositioning String?
+  status           AnalysisStatus @default(pending)
+  themes           Json?
+  sources          Json?
+  modelVersion     String?
+  promptVersion    String?
+  confidence       Float?
+  generatedAt      DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([targetMarket, targetQuarter, category])
+  @@index([expiresAt])
+  @@index([status])
+}
+
+model RecommendationConfig {
+  id               String   @id @default(cuid())
+  name             String
+  isDefault        Boolean  @default(false)
+  targetMarket     String   @default("IL")
+  selectionWeights Json
+  quantityRules    Json
+  algorithmVersion String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  buyPlans BuyPlan[]
+
+  @@index([isDefault, targetMarket])
+}
+
 model BuyPlan {
-  id          String   @id @default(cuid())
-  name        String
-  quarter     String // target quarter e.g. "2026-Q3"
-  brandFocus  String? // brand/מותג used for trend research
-  status      String   @default("draft") // draft | locked
-  totalBudget Float?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  lockedAt    DateTime?
+  id                  String    @id @default(cuid())
+  name                String
+  quarter             String // target quarter e.g. "2026-Q3"
+  brandFocus          String? // brand/מותג used for trend research
+  targetMarket        String    @default("IL")
+  season              String?
+  gender              String?
+  targetCustomer      String?
+  pricePositioning    String?
+  deliveryWindowStart DateTime?
+  deliveryWindowEnd   DateTime?
+  status              String    @default("draft") // draft | locked
+  totalBudget         Float?
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lockedAt            DateTime?
+
+  catalogImportId        String?
+  catalogImport          CatalogImport?        @relation(fields: [catalogImportId], references: [id], onDelete: SetNull)
+  recommendationConfigId String?
+  recommendationConfig   RecommendationConfig? @relation(fields: [recommendationConfigId], references: [id], onDelete: SetNull)
 
   items BuyPlanItem[]
+  jobs  BackgroundJob[]
+
+  @@index([catalogImportId])
+  @@index([recommendationConfigId])
+  @@index([targetMarket, quarter])
 }
 
 model BuyPlanItem {
-  id                     String   @id @default(cuid())
-  buyPlanId              String
-  buyPlan                BuyPlan  @relation(fields: [buyPlanId], references: [id], onDelete: Cascade)
-  sku                    String?
-  styleName              String
-  category               String
-  color                  String?
-  brand                  String?
-  unitCost               Float
-  unitPrice              Float
-  recommendedQty         Int
-  finalQty               Int
-  trendScore             Float // 0-100
-  confidence             String // low | medium | high
-  rationale              String
-  similarHistoricSku     String?
-  sellThroughForecastPct Float?
-  imageUrl               String?
-  createdAt              DateTime @default(now())
+  id                          String          @id @default(cuid())
+  buyPlanId                   String
+  buyPlan                     BuyPlan         @relation(fields: [buyPlanId], references: [id], onDelete: Cascade)
+  productId                   String?
+  product                     CatalogProduct? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sku                         String?
+  styleName                   String
+  category                    String
+  color                       String?
+  brand                       String?
+  unitCost                    Float
+  unitPrice                   Float
+  recommendedQty              Int
+  finalQty                    Int
+  trendScore                  Float // 0-100
+  selectionScore              Float?
+  selectionClass              String?
+  historicalFitScore          Float?
+  trendRelevanceScore         Float?
+  brandCustomerFitScore       Float?
+  commercialValueScore        Float?
+  assortmentContributionScore Float?
+  confidence                  String // low | medium | high
+  rationale                   String
+  similarHistoricSku          String?
+  sellThroughForecastPct      Float?
+  imageUrl                    String?
+  userQuantity                Int?
+  recommendationReason        Json?
+  evidence                    Json?
+  overrideReason              String?
+  algorithmVersion            String?
+  createdAt                   DateTime        @default(now())
 
+  @@index([buyPlanId])
+  @@index([productId])
+  @@index([selectionClass])
+  @@index([confidence])
+}
+
+model BackgroundJob {
+  id              String         @id @default(cuid())
+  type            JobType
+  status          JobStatus      @default(queued)
+  progress        Int            @default(0)
+  currentStep     String?
+  retryCount      Int            @default(0)
+  maxRetries      Int            @default(3)
+  payload         Json?
+  result          Json?
+  structuredError Json?
+  catalogImportId String?
+  catalogImport   CatalogImport? @relation(fields: [catalogImportId], references: [id], onDelete: Cascade)
+  buyPlanId       String?
+  buyPlan         BuyPlan?       @relation(fields: [buyPlanId], references: [id], onDelete: Cascade)
+  queuedAt        DateTime       @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status, queuedAt])
+  @@index([type, status])
+  @@index([catalogImportId])
   @@index([buyPlanId])
 }

@@ -3,9 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 /**
  * Phase 2 trend signal: a Claude agent with the web search tool, researching
  * live demand/trend momentum for a brand + category ahead of a target
- * quarter. Dormant until ANTHROPIC_API_KEY is set — callers should fall back
- * to a deterministic heuristic when this returns null (missing key, parse
- * failure, refusal, or any API error).
+ * quarter. Dormant until ANTHROPIC_API_KEY is set. A null result means there
+ * is no verified live signal; callers must not manufacture a replacement.
  */
 
 export type TrendResult = {
@@ -45,7 +44,8 @@ function parseTrendJson(text: string): TrendResult | null {
 export async function getTrendScore(
   brandFocus: string | undefined,
   category: string,
-  quarter: string
+  quarter: string,
+  targetMarket = "IL"
 ): Promise<TrendResult | null> {
   const anthropic = getClient();
   if (!anthropic) return null;
@@ -67,7 +67,7 @@ export async function getTrendScore(
       messages: [
         {
           role: "user",
-          content: `${brandLine}\nCategory: ${category}\nTarget quarter: ${quarter}\n\nHow strong is demand/trend momentum for this heading into ${quarter}? Score 0-100.`,
+          content: `${brandLine}\nTarget market: ${targetMarket}\nCategory: ${category}\nTarget quarter: ${quarter}\n\nHow strong is demand/trend momentum in the target market heading into ${quarter}? Score 0-100.`,
         },
       ],
     });

@@ -10,8 +10,8 @@ import { embedTexts, cosineSimilarity } from "@/lib/ai/embeddings";
  *
  * - `getTrendScore` (src/lib/ai/trend.ts): a Claude agent with the web search
  *   tool, researching real trend momentum for a brand/category/quarter.
- *   Falls back to a deterministic hash-based heuristic when ANTHROPIC_API_KEY
- *   is unset.
+ *   Returns no signal when ANTHROPIC_API_KEY is unset. Missing live evidence
+ *   never becomes an invented trend score.
  * - `embedTexts` (src/lib/ai/embeddings.ts): Voyage AI embeddings for
  *   catalog-to-history similarity. Falls back to token-overlap similarity
  *   when VOYAGE_API_KEY is unset.
@@ -49,6 +49,7 @@ export type RecommendationResult = {
 export type GenerateOptions = {
   quarter: string; // target quarter, e.g. "2026-Q3"
   brandFocus?: string;
+  targetMarket?: string;
   totalBudget?: number;
 };
 
@@ -74,17 +75,6 @@ function tokenSimilarity(a: string, b: string): number {
 function quarterNumber(quarter: string): number {
   const n = parseInt(quarter.split("-Q")[1] ?? "1", 10);
   return Number.isFinite(n) ? n : 1;
-}
-
-// Deterministic pseudo-trend signal (hash-based) — fallback when the live
-// Claude + web search trend agent isn't configured (see src/lib/ai/trend.ts).
-function brandBuzzScore(brandFocus: string | undefined, category: string, quarter: string): number {
-  const key = `${brandFocus ?? "general"}::${category}::${quarter}`;
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  }
-  return 40 + (hash % 60); // 40-99 range so it always contributes positively
 }
 
 function clampQty(qty: number): number {
@@ -129,7 +119,12 @@ export async function generateBuyPlanRecommendations(
       historicByCategory.set(category, rows);
     }),
     ...categories.map(async (category) => {
-      const result = await getTrendScore(options.brandFocus, category, options.quarter);
+      const result = await getTrendScore(
+        options.brandFocus,
+        category,
+        options.quarter,
+        options.targetMarket ?? "IL"
+      );
       trendByCategory.set(category, result);
     }),
   ]);
@@ -167,11 +162,8 @@ export async function generateBuyPlanRecommendations(
       const avgQtyOrdered =
         pool.length > 0 ? pool.reduce((sum, o) => sum + o.qtyOrdered, 0) / pool.length : 80;
 
-      const trendScore = liveTrend
-        ? Math.round((avgSellThrough ?? 55) * 0.4 + liveTrend.score * 0.6)
-        : Math.round((avgSellThrough ?? 55) * 0.5 + brandBuzzScore(options.brandFocus, category, options.quarter) * 0.5);
-
-      const momentum = 0.7 + (trendScore / 100) * 0.6; // 0.7x - 1.3x
+      const trendScore = liveTrend ? liveTrend.score : 0;
+      const momentum = liveTrend ? 0.7 + (trendScore / 100) * 0.6 : 1;
       const recommendedQty = clampQty(avgQtyOrdered * momentum);
 
       const bestMatch = strongMatches[0]?.order ?? null;
@@ -181,7 +173,7 @@ export async function generateBuyPlanRecommendations(
         : `No close historic match. Using the ${category} category average (${(avgSellThrough ?? 55).toFixed(1)}% sell-through).`;
       const trendSentence = liveTrend
         ? liveTrend.rationale
-        : `Trend score ${trendScore}/100 for ${category}${options.brandFocus ? ` and "${options.brandFocus}"` : ""} heading into ${options.quarter}.`;
+        : "Live trend analysis is unavailable and did not contribute to this recommendation.";
       const rationale = `${historicSentence} ${trendSentence}`;
 
       results.push({

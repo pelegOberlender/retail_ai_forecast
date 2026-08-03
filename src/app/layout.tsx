@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import Nav from "@/components/Nav";
 import { MotionProvider } from "@/components/MotionProvider";
+import { getUser } from "@/lib/supabase/server";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -15,16 +16,18 @@ export const metadata: Metadata = {
     "Forecast demand and build quarterly buy plans from historic orders, catalog data, and fashion trend signals.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getUser();
+
   return (
     <html lang="en" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <MotionProvider>
-          <Nav />
+          <Nav userEmail={user?.email ?? null} />
           <main className="flex-1">{children}</main>
         </MotionProvider>
       </body>
