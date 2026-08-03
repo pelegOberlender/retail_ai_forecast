@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import Nav from "@/components/Nav";
+import { MotionProvider } from "@/components/MotionProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,8 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Nav />
-        <main className="flex-1">{children}</main>
+        <MotionProvider>
+          <Nav />
+          <main className="flex-1">{children}</main>
+        </MotionProvider>
       </body>
     </html>
   );

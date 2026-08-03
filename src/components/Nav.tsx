@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
+import { Logo } from "./icons/Logo";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -20,15 +21,7 @@ export default function Nav() {
     <header className="sticky top-0 z-40 border-b border-hairline bg-nav/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 sm:px-10">
         <Link href="/" className="flex items-center gap-2 text-foreground">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M3 19L9 9.5L12.5 14.5L21 3"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="square"
-              strokeLinejoin="miter"
-            />
-          </svg>
+          <Logo className="h-5 w-5" />
           <span className="font-display text-lg">MODO</span>
         </Link>
 

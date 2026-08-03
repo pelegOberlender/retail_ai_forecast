@@ -10,14 +10,14 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={clsx("rounded-xl border border-hairline bg-white", className)}>
+    <div className={clsx("rounded-panel border border-hairline bg-white", className)}>
       {children}
     </div>
   );
 }
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors active:scale-[0.98] transition-transform duration-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
 
 const variants = {
   dark: "bg-ink-band text-white hover:bg-ink-band/88",
