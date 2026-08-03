@@ -26,22 +26,18 @@ export function AuthShell({
         transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         className="relative hidden min-h-[calc(100dvh-4rem)] overflow-hidden bg-ink-band lg:block"
       >
-        <motion.div
-          initial={reduceMotion ? false : { scale: 1.045 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0"
-        >
+        <div className="absolute inset-0">
           <Image
             src={heroImage}
             alt="Fashion buyers reviewing a seasonal collection in a showroom"
             fill
             priority
             placeholder="blur"
+            quality={90}
             sizes="(min-width: 1280px) 38vw, 42vw"
-            className="object-cover object-[61%_center]"
+            className="object-cover object-[61%_center] opacity-82"
           />
-        </motion.div>
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent from-35% to-ink-band/75" />
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 18 }}

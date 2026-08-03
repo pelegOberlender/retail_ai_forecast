@@ -40,6 +40,7 @@
     "Keep desktop page titles between 40px and 52px",
     "Use five primary workspace sections: Overview, Buy Plans, Catalogs, Historical Data, and Settings",
     "Use a compact desktop context bar with breadcrumbs, target market, and the primary create action",
-    "Use a narrow 38–42% editorial image rail on desktop authentication screens with a restrained one-time reveal motion"
+    "Use a narrow 38–42% editorial image rail on desktop authentication screens with a restrained one-time reveal motion",
+    "Render authentication photography at high quality with slight transparency over graphite so it blends into the interface"
   ]
 }
