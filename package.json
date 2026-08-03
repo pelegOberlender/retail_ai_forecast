@@ -13,9 +13,6 @@
     "db:validate": "prisma validate",
     "db:seed": "tsx prisma/seed.ts"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
     "@prisma/client": "^6.19.3",

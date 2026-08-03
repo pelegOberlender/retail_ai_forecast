@@ -33,7 +33,8 @@ Create `.env.local` in the project root. This file is ignored by Git. Do not pas
 
 | Variable | Required for | Where to obtain it | Exposure |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | PostgreSQL migrations and runtime data | Supabase → Project Settings → Database → Connection string. Use the transaction pooler URI for serverless deployment. | Server only |
+| `DATABASE_URL` | Runtime PostgreSQL data | Supabase → Connect → ORM → Prisma → transaction pooler URI. | Server only |
+| `DIRECT_URL` | Prisma migrations | Supabase → Connect → ORM → Prisma → session/direct URI. | Server only |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase browser/server client | Supabase → Project Settings → API → Project URL | Public by design |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Authentication from the browser | Supabase → Project Settings → API → anon/publishable key | Public by design |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-side storage/admin work in later milestones | Supabase → Project Settings → API → service role key | Server only; never prefix with `NEXT_PUBLIC_` |
