@@ -616,7 +616,7 @@ function CatalogPreview({ catalogImport, loading, onPage }: { catalogImport: Cat
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 gap-3">
                 <span className="relative grid h-16 w-12 shrink-0 place-items-center overflow-hidden bg-surface text-[10px] text-foreground-soft">
-                  {product.imageUrl?.startsWith("/") ? (
+                  {product.imageUrl ? (
                     <Image src={product.imageUrl} alt="" fill sizes="48px" className="object-cover" unoptimized />
                   ) : product.styleName.slice(0, 2).toUpperCase()}
                 </span>
@@ -659,7 +659,7 @@ function CatalogPreview({ catalogImport, loading, onPage }: { catalogImport: Cat
                 <td className="px-5 py-4 align-top">
                   <div className="flex items-start gap-3">
                     <span className="relative grid h-16 w-12 shrink-0 place-items-center overflow-hidden bg-surface text-[9px] text-foreground-soft">
-                      {product.imageUrl?.startsWith("/") ? (
+                      {product.imageUrl ? (
                         <Image src={product.imageUrl} alt="" fill sizes="48px" className="object-cover" unoptimized />
                       ) : product.styleName.slice(0, 2).toUpperCase()}
                     </span>

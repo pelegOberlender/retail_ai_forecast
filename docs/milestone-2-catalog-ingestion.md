@@ -54,3 +54,9 @@ npm run build
 ```
 
 Browser acceptance uses `/buy-plans/new` with `public/sample-catalog.csv`, then verifies `/catalogs` and the generated buy-plan workspace.
+
+## Image delivery
+
+- Embedded catalog images are resized to a maximum of 360×480 and stored as WebP thumbnails.
+- Authenticated catalog APIs return short-lived signed Storage URLs, so the browser downloads private thumbnails directly.
+- `npm run catalog:optimize-images` safely creates thumbnails for legacy imports and keeps their original files intact.

@@ -1,5 +1,6 @@
 import "server-only";
 import type { Prisma } from "@prisma/client";
+import { createSignedCatalogImageUrls } from "@/lib/catalogStorage";
 import { prisma } from "@/lib/prisma";
 import type { CatalogImportView, CatalogIssueView, CatalogPreviewPage } from "@/lib/catalogContracts";
 
@@ -37,11 +38,14 @@ function paginationOptions(options: { page?: number; pageSize?: number }) {
   };
 }
 
-function previewRows(products: PreviewProduct[]) {
+async function previewRows(products: PreviewProduct[]) {
+  const signedUrls = await createSignedCatalogImageUrls(
+    products.flatMap((product) => product.imageRef ? [product.imageRef] : [])
+  ).catch(() => new Map<string, string>());
   return products.map((product) => ({
     ...product,
     imageUrl: product.imageRef
-      ? `/api/catalog-images?path=${encodeURIComponent(product.imageRef)}`
+      ? signedUrls.get(product.imageRef) ?? `/api/catalog-images?path=${encodeURIComponent(product.imageRef)}`
       : product.sourceUrl,
   }));
 }
@@ -66,7 +70,7 @@ export async function getCatalogPreviewPage(
   if (!catalogImport) return null;
 
   return {
-    preview: previewRows(catalogImport.products),
+    preview: await previewRows(catalogImport.products),
     pagination: {
       page,
       pageSize,
@@ -124,7 +128,7 @@ export async function getCatalogImportView(
       name: group.category ?? "Uncategorized",
       count: group._count._all,
     })),
-    preview: previewRows(catalogImport.products),
+    preview: await previewRows(catalogImport.products),
     pagination: {
       page,
       pageSize,
